@@ -1,0 +1,435 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+// User management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String?  @unique
+  firstName String?
+  lastName  String?
+  avatar    String?
+  
+  // Authentication
+  passwordHash String?
+  emailVerified DateTime?
+  
+  // Profile settings
+  isPublic      Boolean @default(false)
+  activityType  ActivityType @default(RUN)
+  paceUnit      PaceUnit @default(METRIC)
+  
+  // Role-based access control
+  role          UserRole @default(USER)
+  
+  // Token management for paid downloads
+  tokenBalance  Int @default(0) // Number of download tokens available
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastLoginAt DateTime?
+  
+  // Relations
+  routes      Route[]
+  favorites   RouteFavorite[]
+  sessions    Session[]
+  apiKeys     ApiKey[]
+  payments    PaymentTransaction[]
+  
+  @@map("users")
+}
+
+// Session management for authentication
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// API key management for rate limiting
+model ApiKey {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  userId    String
+  
+  // Rate limiting
+  rateLimit    Int @default(100) // requests per window
+  windowMs     Int @default(60000) // 1 minute
+  
+  // Status
+  isActive     Boolean @default(true)
+  lastUsedAt   DateTime?
+  
+  // Timestamps
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("api_keys")
+}
+
+// Main route storage with PostGIS geometry
+model Route {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // Run details
+  date        String?   // Date of the run/activity (ISO date string)
+  startTime   String?   // Start time of the run/activity (HH:MM format)
+  
+  // Route data (stored as PostGIS geometry)
+  // This will store the route as a LineString with elevation data
+  geometry    Unsupported("geometry(LINESTRING, 4326)")
+  
+  // Complete route data as JSONB arrays
+  // These store the full coordinate and elevation arrays for accurate chart rendering
+  routeCoordinates Json? // Array of [lat, lng] coordinate pairs
+  routeElevations  Json? // Array of elevation values in meters
+  
+  // Route metadata
+  distance       Float   // in kilometers
+  duration       Int     // in seconds
+  elevationGain  Float   // in meters
+  averagePace    Float   // in min/km
+  averageHeartRate Int?   // average heart rate in bpm
+  activityType   ActivityType @default(RUN)
+  
+  // Pace and heart rate settings (stored as JSON)
+  paceHeartRateSettings Json?
+  
+  // Statistics
+  pointCount     Int
+  minElevation   Float?
+  maxElevation   Float?
+  
+  // Visibility and sharing
+  isPublic       Boolean @default(false)
+  isTemplate     Boolean @default(false)
+  difficulty     DifficultyLevel?
+  
+  // Timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Creator
+  userId         String
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  tags           RouteTag[]
+  favorites      RouteFavorite[]
+  exports        RouteExport[]
+  chartData      RouteChartData[]
+  
+  @@map("routes")
+  @@index([geometry], type: Gist)
+  @@index([isPublic, activityType])
+  @@index([userId])
+}
+
+// Route waypoints with detailed information
+model RouteWaypoint {
+  id        String @id @default(cuid())
+  routeId   String
+  
+  // Position (PostGIS Point)
+  location  Unsupported("geometry(POINT, 4326)")
+  
+  // Order in route
+  sequence  Int
+  
+  // Elevation and timing
+  elevation Float?
+  timestamp DateTime?
+  
+  // Distance from start
+  distanceFromStart Float? // in kilometers
+  
+  // Pace at this point
+  pace      Float? // in min/km
+  heartRate Int?   // bpm
+  
+  @@map("route_waypoints")
+  @@index([location], type: Gist)
+  @@index([routeId, sequence])
+}
+
+// Chart data for interactive editing
+model RouteChartData {
+  id          String @id @default(cuid())
+  routeId     String
+  
+  // Chart point data
+  distance    Float  // cumulative distance in km
+  pace        Float? // pace in min/km
+  elevation   Float? // elevation in meters
+  heartRate   Int?   // heart rate in bpm
+  
+  // Order in chart
+  sequence    Int
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  
+  @@map("route_chart_data")
+  @@index([routeId, sequence])
+}
+
+// Tagging system
+model Tag {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  color       String? // hex color code
+  
+  // Usage statistics
+  usageCount  Int @default(0)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  routes      RouteTag[]
+  
+  @@map("tags")
+}
+
+model RouteTag {
+  id      String @id @default(cuid())
+  routeId String
+  tagId   String
+  
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([routeId, tagId])
+  @@map("route_tags")
+}
+
+// Favorites system
+model RouteFavorite {
+  id      String @id @default(cuid())
+  userId  String
+  routeId String
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, routeId])
+  @@map("route_favorites")
+}
+
+// Export history and analytics
+model RouteExport {
+  id        String @id @default(cuid())
+  routeId   String
+  
+  // Export details
+  format    ExportFormat
+  options   Json // export options as JSON
+  
+  // File information
+  filename  String?
+  fileSize  Int?    // in bytes
+  
+  // Client information
+  ipAddress String?
+  userAgent String?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  
+  @@map("route_exports")
+  @@index([routeId])
+  @@index([createdAt])
+}
+
+// Rate limiting tracking
+model RateLimit {
+  id          String @id @default(cuid())
+  identifier  String // IP address or API key
+  endpoint    String // API endpoint
+  
+  // Rate limiting data
+  requests    Int
+  windowStart DateTime
+  windowEnd   DateTime
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([identifier, endpoint, windowStart])
+  @@map("rate_limits")
+  @@index([identifier, endpoint])
+  @@index([windowEnd])
+}
+
+// System settings and configuration
+model SystemSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  
+  // Metadata
+  description String?
+  category    String?
+  isPublic    Boolean @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("system_settings")
+}
+
+// Payment transactions
+model PaymentTransaction {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Anonymous user tracking
+  anonymousId   String?
+  
+  // Payment details
+  amount        Float
+  currency      String    @default("USD")
+  status        PaymentStatus
+  provider      String    @default("stripe")
+  providerTransactionId String?
+  
+  // Token package
+  tokensPurchased Int
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+  
+  @@map("payment_transactions")
+  @@index([userId])
+  @@index([anonymousId])
+}
+
+// Anonymous token tracking for non-registered users
+model AnonymousToken {
+  id            String   @id @default(cuid())
+  anonymousId   String   @unique // Client-side generated ID stored in cookies/localStorage
+  
+  // Token balance
+  tokenBalance  Int      @default(0)
+  
+  // Expiry time for anonymous tokens
+  expiresAt     DateTime
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("anonymous_tokens")
+  @@index([anonymousId])
+}
+
+// Download tracking
+model RouteDownload {
+  id            String   @id @default(cuid())
+  routeId       String
+  userId        String?
+  anonymousId   String?
+  
+  // Download details
+  format        ExportFormat
+  tokensUsed    Int      @default(1)
+  ipAddress     String?
+  userAgent     String?
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  
+  @@map("route_downloads")
+  @@index([routeId])
+  @@index([userId])
+  @@index([anonymousId])
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  
+  @@map("payment_status")
+}
+
+// Enums
+enum ActivityType {
+  RUN
+  BIKE
+  WALK
+  HIKE
+  
+  @@map("activity_type")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  
+  @@map("user_role")
+}
+
+enum PaceUnit {
+  METRIC    // min/km
+  IMPERIAL  // min/mile
+  
+  @@map("pace_unit")
+}
+
+enum DifficultyLevel {
+  EASY
+  MODERATE
+  HARD
+  EXTREME
+  
+  @@map("difficulty_level")
+}
+
+enum ExportFormat {
+  GPX
+  TCX
+  KML
+  JSON
+  
+  @@map("export_format")
+}

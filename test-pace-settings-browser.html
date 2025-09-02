@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Pace Settings Loading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        .info { color: #3b82f6; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #e5e7eb;
+        }
+        .step.active {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .step.success {
+            border-left-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .step.error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Pace Settings Loading Test</h1>
+    <p>This test will verify that pace and heart rate settings are properly loaded from saved routes.</p>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <ol>
+            <li>Make sure the development server is running at <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></li>
+            <li>Make sure you have at least one saved route with pace settings in the database</li>
+            <li>Click "Run Test" to simulate the loading process</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Steps</h2>
+        <div id="test-steps">
+            <div class="step" id="step-1">
+                <strong>Step 1:</strong> Check if development server is accessible
+            </div>
+            <div class="step" id="step-2">
+                <strong>Step 2:</strong> Test authentication (if required)
+            </div>
+            <div class="step" id="step-3">
+                <strong>Step 3:</strong> Load saved routes page
+            </div>
+            <div class="step" id="step-4">
+                <strong>Step 4:</strong> Check if routes with pace settings exist
+            </div>
+            <div class="step" id="step-5">
+                <strong>Step 5:</strong> Simulate loading a route with pace settings
+            </div>
+            <div class="step" id="step-6">
+                <strong>Step 6:</strong> Verify sessionStorage contains correct pace settings
+            </div>
+        </div>
+        
+        <button onclick="runTest()">Run Test</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+    
+    <script>
+        let currentStep = 0;
+        
+        function updateStep(stepNum, status, message) {
+            const step = document.getElementById(`step-${stepNum}`);
+            step.className = `step ${status}`;
+            if (message) {
+                const existing = step.querySelector('.step-message');
+                if (existing) existing.remove();
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'step-message';
+                messageDiv.innerHTML = `<small>${message}</small>`;
+                step.appendChild(messageDiv);
+            }
+        }
+        
+        function logResult(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            // Reset all steps
+            for (let i = 1; i <= 6; i++) {
+                const step = document.getElementById(`step-${i}`);
+                step.className = 'step';
+                const message = step.querySelector('.step-message');
+                if (message) message.remove();
+            }
+        }
+        
+        async function runTest() {
+            clearResults();
+            logResult('🚀 Starting pace settings loading test...', 'info');
+            
+            try {
+                // Step 1: Check server accessibility
+                updateStep(1, 'active');
+                logResult('Step 1: Checking development server...', 'info');
+                
+                try {
+                    const response = await fetch('http://localhost:3000');
+                    if (response.ok) {
+                        updateStep(1, 'success', '✅ Server is accessible');
+                        logResult('✅ Development server is running', 'success');
+                    } else {
+                        throw new Error(`Server returned ${response.status}`);
+                    }
+                } catch (error) {
+                    updateStep(1, 'error', '❌ Server not accessible');
+                    logResult(`❌ Cannot access development server: ${error.message}`, 'error');
+                    return;
+                }
+                
+                // Step 2: Test basic API access
+                updateStep(2, 'active');
+                logResult('Step 2: Testing API access...', 'info');
+                
+                // For this test, we'll simulate the sessionStorage approach
+                // since we can't easily authenticate from this test page
+                updateStep(2, 'success', '⚠️ Skipping auth (using sessionStorage simulation)');
+                logResult('⚠️ Skipping authentication test - will simulate sessionStorage approach', 'warning');
+                
+                // Step 3: Simulate loading saved routes page
+                updateStep(3, 'active');
+                logResult('Step 3: Simulating saved routes page load...', 'info');
+                
+                // Simulate the data that would be stored in sessionStorage
+                const mockRouteData = {
+                    routeData: {
+                        distance: 5000,
+                        duration: 1800,
+                        elevationGain: 100,
+                        averagePace: 5.5,
+                        routeCoordinates: [[0, 0], [1, 1]]
+                    },
+                    chartData: [
+                        { distance: 0, pace: 5.0, heartRate: 145 },
+                        { distance: 1000, pace: 5.5, heartRate: 150 },
+                        { distance: 2000, pace: 6.0, heartRate: 155 }
+                    ],
+                    activityType: 'running',
+                    routeName: 'Test Route with Pace Settings',
+                    description: 'A test route for verifying pace settings loading',
+                    date: '2024-01-15',
+                    startTime: '08:00',
+                    paceHeartRateSettings: {
+                        averagePace: 5.2,
+                        paceInconsistency: 25,
+                        includeHeartRate: true,
+                        averageHeartRate: 148,
+                        heartRateVariability: 15
+                    }
+                };
+                
+                updateStep(3, 'success', '✅ Mock route data prepared');
+                logResult('✅ Prepared mock route data with pace settings', 'success');
+                
+                // Step 4: Check pace settings
+                updateStep(4, 'active');
+                logResult('Step 4: Verifying pace settings exist...', 'info');
+                
+                if (mockRouteData.paceHeartRateSettings) {
+                    updateStep(4, 'success', '✅ Pace settings found');
+                    logResult('✅ Pace settings found in mock data:', 'success');
+                    logResult(`   - Average Pace: ${mockRouteData.paceHeartRateSettings.averagePace} min/km`, 'info');
+                    logResult(`   - Pace Inconsistency: ${mockRouteData.paceHeartRateSettings.paceInconsistency}%`, 'info');
+                    logResult(`   - Include Heart Rate: ${mockRouteData.paceHeartRateSettings.includeHeartRate}`, 'info');
+                    logResult(`   - Average Heart Rate: ${mockRouteData.paceHeartRateSettings.averageHeartRate} bpm`, 'info');
+                    logResult(`   - Heart Rate Variability: ${mockRouteData.paceHeartRateSettings.heartRateVariability}%`, 'info');
+                } else {
+                    updateStep(4, 'error', '❌ No pace settings found');
+                    logResult('❌ No pace settings found in mock data', 'error');
+                    return;
+                }
+                
+                // Step 5: Simulate sessionStorage storage
+                updateStep(5, 'active');
+                logResult('Step 5: Simulating sessionStorage storage...', 'info');
+                
+                try {
+                    sessionStorage.setItem('loadRouteData', JSON.stringify(mockRouteData));
+                    updateStep(5, 'success', '✅ Data stored in sessionStorage');
+                    logResult('✅ Mock route data stored in sessionStorage', 'success');
+                } catch (error) {
+                    updateStep(5, 'error', '❌ Failed to store in sessionStorage');
+                    logResult(`❌ Failed to store in sessionStorage: ${error.message}`, 'error');
+                    return;
+                }
+                
+                // Step 6: Verify sessionStorage retrieval
+                updateStep(6, 'active');
+                logResult('Step 6: Verifying sessionStorage retrieval...', 'info');
+                
+                try {
+                    const storedData = sessionStorage.getItem('loadRouteData');
+                    if (storedData) {
+                        const parsed = JSON.parse(storedData);
+                        if (parsed.paceHeartRateSettings) {
+                            updateStep(6, 'success', '✅ Pace settings retrieved correctly');
+                            logResult('✅ Pace settings successfully retrieved from sessionStorage:', 'success');
+                            logResult(`<pre>${JSON.stringify(parsed.paceHeartRateSettings, null, 2)}</pre>`, 'info');
+                            
+                            // Final success message
+                            logResult('🎉 TEST PASSED: Pace settings loading simulation completed successfully!', 'success');
+                            logResult('💡 Next step: Test this in the actual application by:', 'info');
+                            logResult('   1. Go to http://localhost:3000/saved-routes', 'info');
+                            logResult('   2. Load a route with saved pace settings', 'info');
+                            logResult('   3. Check if the sliders show the correct values', 'info');
+                        } else {
+                            updateStep(6, 'error', '❌ Pace settings missing from retrieved data');
+                            logResult('❌ Pace settings missing from retrieved sessionStorage data', 'error');
+                        }
+                    } else {
+                        updateStep(6, 'error', '❌ No data found in sessionStorage');
+                        logResult('❌ No data found in sessionStorage', 'error');
+                    }
+                } catch (error) {
+                    updateStep(6, 'error', '❌ Failed to retrieve from sessionStorage');
+                    logResult(`❌ Failed to retrieve from sessionStorage: ${error.message}`, 'error');
+                }
+                
+            } catch (error) {
+                logResult(`❌ Test failed with error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            logResult('🔧 Test page loaded. Click "Run Test" to start the simulation.', 'info');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="60" fill="#1f2937" rx="8"/>
+  
+  <!-- Route path -->
+  <path d="M15 35 Q25 25, 35 35 T55 35" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Bicycle icon -->
+  <g transform="translate(60, 20)">
+    <!-- Wheels -->
+    <circle cx="5" cy="15" r="8" stroke="#10b981" stroke-width="2" fill="none"/>
+    <circle cx="25" cy="15" r="8" stroke="#10b981" stroke-width="2" fill="none"/>
+    
+    <!-- Frame -->
+    <path d="M5 15 L15 5 L25 15 M15 5 L15 15 M10 15 L20 15" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Pedal -->
+    <circle cx="15" cy="15" r="2" fill="#10b981"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="100" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">FakeMyRide</text>
+  <text x="100" y="42" font-family="Arial, sans-serif" font-size="10" fill="#9ca3af">Route Creator</text>
