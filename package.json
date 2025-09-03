@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev -p 3000",
     "dev:clean": "node scripts/dev-clean.js",
     "kill-port": "for /f \"tokens=5\" %a in ('netstat -ano | findstr :3000') do taskkill /PID %a /F 2>nul || echo Port 3000 is free",
