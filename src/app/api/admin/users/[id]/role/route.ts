@@ -13,7 +13,7 @@ const RoleUpdateSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if user is admin
@@ -31,7 +31,7 @@ export async function PATCH(
     await generalLimiter.check(request, 20, clientIP);
     
     // Get user ID from path
-    const { id } = params;
+    const { id } = await params;
     
     // Check if user exists
     const user = await prisma.user.findUnique({
