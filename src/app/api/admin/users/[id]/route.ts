@@ -7,7 +7,7 @@ const prisma = db;
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if user is admin
@@ -25,7 +25,7 @@ export async function DELETE(
     await generalLimiter.check(request, 10, clientIP);
     
     // Get user ID from path
-    const { id } = params;
+    const { id } = await params;
     
     // Prevent deleting yourself
     if (id === admin.id) {
