@@ -616,7 +616,7 @@ class RoutesService {
                 coordinates: storedRouteCoordinates || routeGeometry?.coordinates || waypoints.map((wp: any) => [wp.longitude, wp.latitude]),
                 routeGeometry: routeGeometry,
                 routeCoordinates: storedRouteCoordinates || routeGeometry?.coordinates || waypoints.map((wp: any) => [wp.longitude, wp.latitude]),
-                routeElevations: storedRouteElevations || chartData.map(cd => cd.elevation || 0)
+                routeElevations: storedRouteElevations || chartData.map((cd: any) => cd.elevation || 0)
               }
             }
           }),

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { RouteData, PaceHeartRateSettings, ChartDataPoint } from '@/types/route'
+import { RouteData, PaceHeartRateSettings, ChartDataPoint } from '@/types'
 import { calculateDistance, generateRealisticPace, generateRealisticHeartRate } from '@/utils/mapUtils'
 import CombinedRouteChart from './CombinedRouteChart'
 

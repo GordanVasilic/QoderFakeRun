@@ -566,7 +566,7 @@ export default function MapComponent({
         antialias: false, // Disable for better software performance
         renderWorldCopies: false, // Reduce complexity
         // Enhanced transform request to handle network issues
-        transformRequest: (url: string, resourceType: string) => {
+        transformRequest: (url: string, resourceType: string | undefined) => {
           console.log(`🔗 Loading ${resourceType}: ${url}`)
           // Add headers to prevent caching issues that might cause ERR_ABORTED
           return {
@@ -591,7 +591,7 @@ export default function MapComponent({
         console.error('  Error type:', e.error?.name || 'Unknown')
         console.error('  Error message:', e.error?.message || 'No message')
         console.error('  Error stack:', e.error?.stack || 'No stack trace')
-        console.error('  Error status:', e.error?.status || 'No status')
+        console.error('  Error status:', (e.error as any)?.status || 'No status')
         
         const errorMessage = e.error?.message || ''
         const errorName = e.error?.name || ''
@@ -602,12 +602,12 @@ export default function MapComponent({
                               errorMessage.includes('aborted') ||
                               errorMessage.includes('ERR_ABORTED') ||
                               errorName.includes('AbortError') ||
-                              e.error?.status === 0
+                              (e.error as any)?.status === 0
         
         const isStyleError = errorMessage.includes('style') || 
                             errorMessage.includes('source') ||
-                            e.error?.status === 401 || 
-                            e.error?.status === 403
+                            (e.error as any)?.status === 401 || 
+                            (e.error as any)?.status === 403
         
         // Analyze error type for better user feedback
         let userMessage = 'An error occurred with the map.'

@@ -19,6 +19,8 @@ export interface SavedRoute {
     elevationGain: number
     pointCount: number
     averagePace: number
+    averageHeartRate?: number
+    difficulty?: string
   }
   createdAt: string
   updatedAt: string
@@ -26,6 +28,7 @@ export interface SavedRoute {
     points: Array<{ lat: number; lng: number }>
     routeCoordinates: Array<[number, number]>
   }
+  paceHeartRateSettings?: PaceHeartRateSettings
 }
 
 export interface SavedRoutesFilters {
@@ -33,8 +36,17 @@ export interface SavedRoutesFilters {
   activityType?: 'run' | 'bike'
   minDistance?: number
   maxDistance?: number
+  minPace?: number
+  maxPace?: number
+  minElevationGain?: number
+  maxElevationGain?: number
+  minHeartRate?: number
+  maxHeartRate?: number
+  difficulty?: string
+  startDate?: string
+  endDate?: string
   tags?: string[]
-  sortBy: 'createdAt' | 'name' | 'distance'
+  sortBy: 'createdAt' | 'name' | 'distance' | 'elevationGain' | 'averagePace' | 'difficulty'
   sortOrder: 'asc' | 'desc'
 }
 

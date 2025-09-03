@@ -329,8 +329,8 @@ class DatabaseService {
 }
 
 // Export singleton instance
-export const db = new DatabaseService()
-export default db
+export const databaseService = new DatabaseService()
+export default databaseService
 
 // Helper functions for route data conversion
 export const routeHelpers = {

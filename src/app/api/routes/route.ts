@@ -6,7 +6,7 @@ let routesService: any
 try {
   routesService = require('@/lib/routesService').routesService
 } catch (error) {
-  console.warn('Prisma service unavailable, using fallback:', error.message)
+  console.warn('Prisma service unavailable, using fallback:', error instanceof Error ? error.message : String(error))
   routesService = require('@/lib/fallbackRoutesService').fallbackRoutesService
 }
 import { isAuthenticated } from '@/lib/auth'
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
           console.log('❌ POST route - Admin bypass failed: ID or email mismatch')
         }
       } catch (jwtError) {
-        console.log('❌ POST route - JWT verification failed:', jwtError.message)
+        console.log('❌ POST route - JWT verification failed:', jwtError instanceof Error ? jwtError.message : String(jwtError))
       }
     }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       try {
         user = await isAuthenticated(request)
       } catch (authError) {
-        console.log('POST route - Normal auth error:', authError.message)
+        console.log('POST route - Normal auth error:', authError instanceof Error ? authError.message : String(authError))
       }
     }
 
@@ -105,11 +105,11 @@ export async function POST(request: NextRequest) {
     // Validate route data
     const validation = RouteCreationSchema.safeParse(body)
     if (!validation.success) {
-      console.error('❌ Validation failed:', validation.error.errors)
+      console.error('❌ Validation failed:', validation.error.issues)
       return NextResponse.json({
         success: false,
         error: 'Invalid route data',
-        details: validation.error.errors,
+        details: validation.error.issues,
         code: 'VALIDATION_ERROR'
       }, { status: 400 })
     }
@@ -226,7 +226,7 @@ export async function GET(request: NextRequest) {
         user = await isAuthenticated(request)
         userId = user?.id
       } catch (authError) {
-        console.log('GET routes - Normal auth error:', authError.message)
+        console.log('GET routes - Normal auth error:', authError instanceof Error ? authError.message : String(authError))
       }
     }
 

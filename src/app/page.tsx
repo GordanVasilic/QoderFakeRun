@@ -82,13 +82,13 @@ export default function HomePage() {
     
     if (!runName.trim()) {
       console.log('❌ HomePage: No run name provided');
-      showError('Please enter a run name', 'error')
+      showError('Please enter a run name')
       return
     }
     
     if (!routeData || routeData.points.length < 2) {
       console.log('❌ HomePage: Insufficient route points');
-      showError('Please create a route with at least 2 points', 'error')
+      showError('Please create a route with at least 2 points')
       return
     }
 
@@ -136,7 +136,7 @@ export default function HomePage() {
       
     } catch (error) {
       console.error('❌ HomePage: Error in handleSaveRoute:', error);
-      showError('Failed to save route', 'error')
+      showError('Failed to save route')
     }
   }
 

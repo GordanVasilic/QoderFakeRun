@@ -55,4 +55,5 @@ declare module 'jsonwebtoken' {
   export function decode(
     token: string,
     options?: { complete?: boolean; json?: boolean }
-  ): null | JwtPayload | string | { header: any; payload: J
+  ): null | JwtPayload | string | { header: any; payload: JwtPayload; signature: string };
+}

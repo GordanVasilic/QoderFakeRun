@@ -1,7 +1,7 @@
 export interface RoutePoint {
   lat: number
   lng: number
-  elevation?: number | null
+  elevation?: number
   timestamp?: number
   pace?: number | null
   heartRate?: number | null

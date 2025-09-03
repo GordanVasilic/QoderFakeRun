@@ -12,13 +12,7 @@ export const db =
         url: process.env.DATABASE_URL
       }
     },
-    log: ['query'],
-    // Disable connection pooling to prevent prepared statement conflicts
-    __internal: {
-      engine: {
-        enableEngineDebugMode: false
-      }
-    }
+    log: ['query']
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db

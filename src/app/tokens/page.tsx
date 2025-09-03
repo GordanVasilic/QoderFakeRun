@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useTokenStore } from '@/store/tokenStore'
 import { useAuthStore } from '@/store/authStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function TokensPage() {
+function TokensContent() {
   const { packages, fetchPackages, selectPackage, selectedPackage, purchaseTokens, isLoading, error, checkoutUrl } = useTokenStore()
   const { isAuthenticated, user, tokenBalance, anonymousId, anonymousTokenBalance } = useAuthStore()
   const [pageState, setPageState] = useState<'select' | 'processing' | 'success' | 'error'>('select')
@@ -251,5 +251,13 @@ export default function TokensPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TokensPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TokensContent />
+    </Suspense>
   )
 }
