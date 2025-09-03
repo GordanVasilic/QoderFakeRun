@@ -52,7 +52,7 @@ export async function GET(
       try {
         user = await isAuthenticated(request);
       } catch (authError) {
-        console.log('GET route - Normal auth error:', authError.message);
+        console.log('GET route - Normal auth error:', authError instanceof Error ? authError.message : String(authError));
       }
     }
     
@@ -144,7 +144,7 @@ export async function DELETE(
       try {
         user = await isAuthenticated(request);
       } catch (authError) {
-        console.log('DELETE route - Normal auth error:', authError.message);
+        console.log('DELETE route - Normal auth error:', authError instanceof Error ? authError.message : String(authError));
       }
     }
     
