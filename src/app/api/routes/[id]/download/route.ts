@@ -21,14 +21,14 @@ function getRoutes() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request)
     await generalLimiter.check(request, 20, clientIP) // Lower limit for file downloads
 
-    const { id } = params
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'gpx'
 

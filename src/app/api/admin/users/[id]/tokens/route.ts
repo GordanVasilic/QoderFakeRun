@@ -14,7 +14,7 @@ const TokenUpdateSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if user is admin
@@ -32,7 +32,7 @@ export async function POST(
     await generalLimiter.check(request, 20, clientIP);
     
     // Get user ID from path
-    const { id } = params;
+    const { id } = await params;
     
     // Check if user exists
     const user = await prisma.user.findUnique({
