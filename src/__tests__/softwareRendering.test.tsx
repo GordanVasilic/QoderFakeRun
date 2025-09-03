@@ -6,7 +6,7 @@
  */
 
 import { render, screen } from '@testing-library/react'
-import '@testing-library/jest-dom'
+// import '@testing-library/jest-dom' // Commented out to fix Vercel build issues
 import MapComponent from '@/components/MapComponent'
 
 // Mock Mapbox GL JS for testing
