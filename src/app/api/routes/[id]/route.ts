@@ -4,7 +4,7 @@ let routesService: any
 try {
   routesService = require('@/lib/routesService').routesService
 } catch (error) {
-  console.warn('Prisma service unavailable, using fallback:', error.message)
+  console.warn('Prisma service unavailable, using fallback:', error instanceof Error ? error.message : String(error))
   routesService = require('@/lib/fallbackRoutesService').fallbackRoutesService
 }
 import { isAuthenticated } from '@/lib/auth'
