@@ -67,8 +67,7 @@ const nextConfig = {
     APP_VERSION: process.env.npm_package_version || '1.0.0',
   },
 
-  // Output configuration
-  output: 'standalone',
+  // Output configuration removed for Vercel compatibility
   
   // Disable source maps in production for security
   productionBrowserSourceMaps: false,
