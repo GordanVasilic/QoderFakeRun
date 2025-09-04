@@ -36,7 +36,19 @@ export default function RunDetails({
   initialStartTime = '12:00',
   isAuthenticated = false
 }: RunDetailsProps) {
-  const [runName, setRunName] = useState(initialName)
+  // Generate Strava-style default name
+  const generateDefaultName = () => {
+    const today = new Date()
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    
+    const activityLabel = activityType === 'bike' ? 'Ride' : 'Run'
+    const dateStr = `${months[today.getMonth()]} ${today.getDate()}`
+    
+    return `My${activityLabel} ${dateStr}`
+  }
+
+  const [runName, setRunName] = useState(initialName || generateDefaultName())
   const [runDate, setRunDate] = useState(initialDate)
   const [startTime, setStartTime] = useState(initialStartTime)
   const [description, setDescription] = useState(initialDescription)
@@ -47,11 +59,11 @@ export default function RunDetails({
 
   // Update state when initial props change (for loading saved routes)
   useEffect(() => {
-    setRunName(initialName)
+    setRunName(initialName || generateDefaultName())
     setRunDate(initialDate)
     setStartTime(initialStartTime)
     setDescription(initialDescription)
-  }, [initialName, initialDescription, initialDate, initialStartTime])
+  }, [initialName, initialDescription, initialDate, initialStartTime, activityType])
 
   // Notify parent component when run details change
   const handleRunNameChange = (value: string) => {
@@ -96,6 +108,24 @@ export default function RunDetails({
         },
         chartData,
         format: fileFormat as 'gpx' | 'tcx' | 'both'
+      }
+
+      // Debug logging for heart rate data
+      console.log('🚀 RunDetails - Sending request:', {
+        includeHeartRate: request.options.includeHeartRate,
+        chartDataLength: chartData?.length || 0,
+        paceHeartRateSettings,
+        hasChartData: !!chartData,
+        chartDataSample: chartData?.slice(0, 2)
+      });
+
+      if (chartData && chartData.length > 0) {
+        const hrPoints = chartData.filter(p => p.heartRate && p.heartRate > 50 && p.heartRate < 250);
+        console.log('💓 RunDetails HR Debug:', {
+          totalPoints: chartData.length,
+          pointsWithHR: hrPoints.length,
+          hrValues: hrPoints.slice(0, 5).map(p => p.heartRate)
+        });
       }
 
       const response = await apiClient.generateFiles(request)

@@ -34,23 +34,13 @@ export function generateGPX(routeData: RouteData, options: FileGenerationOptions
   const startDateTime = new Date(`${date}T${startTime}:00.000Z`)
   
   let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="FakeMyRide - Advanced Route Generator" 
-     xmlns="http://www.topografix.com/GPX/1/1"
-     xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">
+<gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
   <metadata>
-    <name>${escapeXml(name || 'My Route')}</name>
-    <desc>${escapeXml(description || 'Generated route with full GPS tracking simulation')}</desc>
     <time>${startDateTime.toISOString()}</time>
-    <author>
-      <name>FakeMyRide</name>
-    </author>
   </metadata>
   <trk>
     <name>${escapeXml(name || 'My Route')}</name>
-    <desc>${escapeXml(description || 'Generated route')}</desc>
-    <type>${options.activityType === 'bike' ? 'Cycling' : 'Running'}</type>
+    <type>${options.activityType === 'bike' ? 'cycling' : 'running'}</type>
     <trkseg>`
 
   // Use complete route coordinates if available, otherwise fallback to waypoints

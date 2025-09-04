@@ -16,6 +16,29 @@ export async function POST(request: NextRequest) {
     const validatedData = FileGenerationSchema.parse(body);
 
     const { routeData, options, chartData, format } = validatedData;
+
+    console.log('🔍 GPX Generation Debug - Received request:', {
+      routeDataKeys: Object.keys(routeData || {}),
+      optionsKeys: Object.keys(options || {}),
+      chartDataLength: chartData?.length || 0,
+      format,
+      includeHeartRate: options?.includeHeartRate,
+      hasChartData: !!chartData,
+      chartDataSample: chartData?.slice(0, 2)
+    });
+
+    // Debug heart rate data specifically
+    if (chartData && chartData.length > 0) {
+      const hrPoints = chartData.filter(p => p.heartRate && p.heartRate > 50 && p.heartRate < 250);
+      console.log('💓 Heart Rate Debug:', {
+        totalPoints: chartData.length,
+        pointsWithHR: hrPoints.length,
+        hrValues: hrPoints.slice(0, 5).map(p => p.heartRate),
+        samplePoint: chartData[0]
+      });
+    } else {
+      console.log('❌ No chartData received or chartData is empty');
+    }
     
     // Check if user has tokens for download (skip in development)
     const isDevelopment = process.env.NODE_ENV === 'development';

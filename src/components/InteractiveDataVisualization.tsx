@@ -102,7 +102,19 @@ export default function InteractiveDataVisualization({
         hasSetExistingDataFlag: hasSetExistingData.current,
         willSkipRegeneration: true
       })
-      // Don't call onChartDataChange here to avoid infinite loop
+      
+      // Call onChartDataChange for existing data to ensure parent component gets the data
+      // Use setTimeout to avoid infinite loop by breaking the synchronous call chain
+      if (onChartDataChange && existingChartData.length > 0) {
+        console.log('📞📞📞 DataVisualization: Calling onChartDataChange for existing data with', existingChartData.length, 'points')
+        console.log('💓💓💓 DataVisualization: Existing heart rate data being passed to parent:', {
+          heartRateCount: existingChartData.filter(p => p.heartRate && p.heartRate > 0).length,
+          sampleHeartRates: existingChartData.slice(0, 5).map(p => p.heartRate).filter(hr => hr && hr > 0)
+        })
+        setTimeout(() => {
+          onChartDataChange(existingChartData)
+        }, 0)
+      }
       return
     }
     
@@ -251,8 +263,30 @@ export default function InteractiveDataVisualization({
       }
     }
 
+    console.log('🚀🚀🚀 DataVisualization: Setting chartData with', data.length, 'points')
+    console.log('💓💓💓 DataVisualization: Heart rate data in chartData:', {
+      includeHeartRate: paceHeartRateSettings?.includeHeartRate || false,
+      heartRatePoints: data.filter(p => p.heartRate && p.heartRate > 0).length,
+      totalPoints: data.length,
+      sampleData: data.slice(0, 3).map(p => ({
+        distance: p.distance,
+        pace: p.pace,
+        heartRate: p.heartRate
+      }))
+    })
+    
     setChartData(data)
-  }, [routeData, paceHeartRateSettings])
+    
+    // Call onChartDataChange immediately after setting chartData
+    if (onChartDataChange && data.length > 0) {
+      console.log('📞📞📞 DataVisualization: Calling onChartDataChange with', data.length, 'points')
+      console.log('💓💓💓 DataVisualization: Heart rate data being passed to parent:', {
+        heartRateCount: data.filter(p => p.heartRate && p.heartRate > 0).length,
+        sampleHeartRates: data.slice(0, 5).map(p => p.heartRate).filter(hr => hr && hr > 0)
+      })
+      onChartDataChange(data)
+    }
+  }, [routeData, paceHeartRateSettings, onChartDataChange])
 
   return (
     <div className="space-y-6">

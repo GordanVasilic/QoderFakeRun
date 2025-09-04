@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
+  <metadata>
+    <time>2024-01-04T08:00:00.000Z</time>
+  </metadata>
+  <trk>
+    <name>Edge Case HR Test</name>
+    <type>running</type>
+    <trkseg>
+      <trkpt lat="46.0500000" lon="14.5000000">
+        <ele>300.00</ele>
+        <time>2024-01-04T08:00:00.000Z</time>
+      </trkpt>
+      <trkpt lat="46.0550000" lon="14.5050000">
+        <ele>305.00</ele>
+        <time>2024-01-04T08:00:30.000Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
