@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generalLimiter, getClientIP } from '@/lib/rateLimit'
 // Import with fallback handling
-let routesService: any
+let routesService: typeof import('@/lib/routesService').routesService
 try {
   routesService = require('@/lib/routesService').routesService
 } catch (error) {
@@ -29,7 +29,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     // Get user from authentication
-    let user: any = null
+    let user: { id: string; email: string; role: string } | null = null
 
     // Try admin bypass first
     const authHeader = request.headers.get('authorization')
@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest) {
       const token = authHeader.substring(7)
       try {
         const JWT_SECRET = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
-        const decoded = jwt.verify(token, JWT_SECRET) as any
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string }
         if (decoded.id === 'cmeu1kwjg0000w5zgh3xdrxma' && decoded.email === 'admin@qoderfakerun.com') {
           user = {
             id: 'cmeu1kwjg0000w5zgh3xdrxma',

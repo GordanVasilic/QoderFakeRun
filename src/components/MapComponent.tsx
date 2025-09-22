@@ -43,7 +43,11 @@ export default function MapComponent({
   const [isLegendVisible, setIsLegendVisible] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
-  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([])
+  const [searchSuggestions, setSearchSuggestions] = useState<Array<{
+    place_name: string;
+    center: [number, number];
+    [key: string]: unknown;
+  }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false)
   const routeCalculationTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const routePointsRef = useRef<RoutePoint[]>([])
@@ -51,7 +55,11 @@ export default function MapComponent({
   const selectedShapeRef = useRef<ShapeType>('draw')
   const selectedPointIndexRef = useRef<number | null>(null)
   const showWaypointsRef = useRef(true)
-  const routeCacheRef = useRef<Map<string, any>>(new Map()) // Simple route cache
+  const routeCacheRef = useRef<Map<string, {
+    coordinates: Array<[number, number]>;
+    distance: number;
+    duration: number;
+  }>>(new Map()) // Simple route cache
   const eventHandlersSetupRef = useRef(false) // Track if event handlers are setup
   const isProcessingPointRef = useRef(false) // Track if point calculation is in progress
 
@@ -371,7 +379,7 @@ export default function MapComponent({
     if (!mapContainer.current || map.current) return
 
     // Enhanced WebGL diagnostic and support check
-    const checkWebGLSupport = (): { supported: boolean, diagnostics: any } => {
+    const checkWebGLSupport = (): { supported: boolean, diagnostics: { webglSupported: boolean; webgl2Supported: boolean; renderer: string; vendor: string; version: string; extensions: string[]; maxTextureSize: number; maxVertexAttribs: number; maxVaryingVectors: number; maxFragmentUniforms: number } } => {
       const diagnostics = {
         webglSupported: false,
         webgl2Supported: false,
@@ -387,7 +395,7 @@ export default function MapComponent({
         aliasedPointSizeRange: [0, 0],
         aliasedLineWidthRange: [0, 0],
         maxViewportDims: [0, 0],
-        contextAttributes: null as any,
+        contextAttributes: null as WebGLContextAttributes | null,
         failureReason: 'unknown'
       }
       
@@ -591,9 +599,9 @@ export default function MapComponent({
         })
         
         setupMapAfterCreation()
-      } catch (error) {
-        console.error('❌ Failed to initialize map:', error)
-        handleMapInitializationError(error)
+      } catch (_error) {
+        console.error('❌ Failed to initialize map:', _error)
+        handleMapInitializationError(_error)
       }
     }
 
@@ -610,7 +618,7 @@ export default function MapComponent({
         console.error('  Error type:', e.error?.name || 'Unknown')
         console.error('  Error message:', e.error?.message || 'No message')
         console.error('  Error stack:', e.error?.stack || 'No stack trace')
-        console.error('  Error status:', (e.error as any)?.status || 'No status')
+        console.error('  Error status:', (e.error as { status?: number })?.status || 'No status')
         
         const errorMessage = e.error?.message || ''
         const errorName = e.error?.name || ''
@@ -621,12 +629,12 @@ export default function MapComponent({
                               errorMessage.includes('aborted') ||
                               errorMessage.includes('ERR_ABORTED') ||
                               errorName.includes('AbortError') ||
-                              (e.error as any)?.status === 0
+                              (e.error as { status?: number })?.status === 0
         
         const isStyleError = errorMessage.includes('style') || 
                             errorMessage.includes('source') ||
-                            (e.error as any)?.status === 401 || 
-                            (e.error as any)?.status === 403
+                            (e.error as { status?: number })?.status === 401 || 
+                            (e.error as { status?: number })?.status === 403
         
         // Analyze error type for better user feedback
         let userMessage = 'An error occurred with the map.'
@@ -679,7 +687,7 @@ export default function MapComponent({
     }
 
     // Function to handle map initialization errors
-    const handleMapInitializationError = (error: any) => {
+    const handleMapInitializationError = (error: Error | unknown) => {
       console.error('❌ Failed to initialize Mapbox map:', error)
       
       // Check for specific CSP/Worker errors
@@ -766,7 +774,7 @@ export default function MapComponent({
     console.log('🔧 Initializing map sources and layers...')
     
     // Helper function to safely add source
-    const addSourceSafely = (id: string, source: any) => {
+    const addSourceSafely = (id: string, source: mapboxgl.AnySourceData) => {
       if (map.current?.getSource(id)) {
         console.log(`📋 Source '${id}' already exists, updating data...`)
         const existingSource = map.current.getSource(id) as mapboxgl.GeoJSONSource
@@ -780,7 +788,7 @@ export default function MapComponent({
     }
     
     // Helper function to safely add layer
-    const addLayerSafely = (layer: any) => {
+    const addLayerSafely = (layer: mapboxgl.AnyLayer) => {
       if (map.current?.getLayer(layer.id)) {
         console.log(`📋 Layer '${layer.id}' already exists, skipping...`)
       } else {
@@ -1213,7 +1221,7 @@ export default function MapComponent({
         console.log('📊 Elevation data received from Mapbox Terrain-RGB API')
         console.log('  📈 Source:', data.data.metadata.source)
         console.log('  🏔️ Elevation gain:', data.data.statistics.totalGain, 'm')
-        console.log('  📍 Points:', data.data.points.map((p: any) => `${p.elevation}m`).join(', '))
+        console.log('  📍 Points:', data.data.points.map((p: { elevation: number }) => `${p.elevation}m`).join(', '))
         
         const pointsWithElevation = points.map((point, index) => ({
           ...point,
@@ -1224,14 +1232,14 @@ export default function MapComponent({
       }
       
       return points
-    } catch (error) {
-      console.warn('Elevation API request failed:', error)
+    } catch (_error) {
+      console.warn('Elevation API request failed:', _error)
       return points
     }
   }
 
   // Fetch route using Mapbox Directions API with elevation request and caching
-  const fetchRoute = async (points: RoutePoint[]): Promise<any> => {
+  const fetchRoute = async (points: RoutePoint[]): Promise<{ geometry: { coordinates: Array<[number, number]> }; distance: number; duration: number } | null> => {
     if (points.length < 2 || !MAPBOX_TOKEN) return null
     
     try {
@@ -1277,8 +1285,8 @@ export default function MapComponent({
       }
       
       return route
-    } catch (error) {
-      console.warn('Route calculation failed, falling back to direct lines:', error)
+    } catch (_error) {
+      console.warn('Route calculation failed, falling back to direct lines:', _error)
       return null
     }
   }
@@ -1350,7 +1358,7 @@ export default function MapComponent({
         console.log('🏔️ Route elevation data (optimized):')
         console.log('  📊 Samples used:', elevationData.data.points.length, 'of', routeCoordinates.length)
         
-        const elevations = elevationData.data.points.map((p: any) => p.elevation || 0)
+        const elevations = elevationData.data.points.map((p: { elevation?: number }) => p.elevation || 0)
         
         // Fast interpolation for all route points
         const allElevations: number[] = []
@@ -1375,8 +1383,8 @@ export default function MapComponent({
       }
       
       return routeCoordinates.map(() => 0)
-    } catch (error) {
-      console.warn('Failed to fetch route elevation data:', error)
+    } catch (_error) {
+      console.warn('Failed to fetch route elevation data:', _error)
       return routeCoordinates.map(() => 0)
     }
   }
@@ -1392,7 +1400,7 @@ export default function MapComponent({
     }
     
     try {
-      let routeGeometry: any = null
+      let routeGeometry: { coordinates: Array<[number, number]> } | null = null
       let routeDistance = 0
       let routeDuration = 0
       let routeElevationGain = 0
@@ -1527,8 +1535,8 @@ export default function MapComponent({
       
       onRouteChange(routeData)
       
-    } catch (error) {
-      console.error('Error updating route:', error)
+    } catch (_error) {
+      console.error('Error updating route:', _error)
     } finally {
       // Only hide notification if it was shown (for 2+ points)
       if (points.length >= 2) {
@@ -1576,8 +1584,8 @@ export default function MapComponent({
         setSearchSuggestions([])
         setShowSuggestions(false)
       }
-    } catch (error) {
-      console.error('Error fetching search suggestions:', error)
+    } catch (_error) {
+      console.error('Error fetching search suggestions:', _error)
       setSearchSuggestions([])
       setShowSuggestions(false)
     }
@@ -1598,7 +1606,7 @@ export default function MapComponent({
   }, [searchQuery, fetchSearchSuggestions])
   
   // Handle suggestion click
-  const handleSuggestionClick = useCallback((feature: any) => {
+  const handleSuggestionClick = useCallback((feature: { center: [number, number]; place_name: string }) => {
     // Immediately hide suggestions to prevent any timing issues
     setShowSuggestions(false)
     setSearchSuggestions([])

@@ -273,9 +273,9 @@ export default function HomePage() {
             console.log('📈 HomePage: Setting chart data with', parsed.chartData.length, 'points')
             console.log('💓 HomePage: Heart rate data analysis:', {
               chartDataLength: parsed.chartData.length,
-              hasHeartRateData: parsed.chartData.some((p: any) => p.heartRate && p.heartRate > 0),
-              heartRateCount: parsed.chartData.filter((p: any) => p.heartRate && p.heartRate > 0).length,
-              sampleHeartRates: parsed.chartData.slice(0, 5).map((p: any) => ({
+              hasHeartRateData: parsed.chartData.some((p: ChartDataPoint) => p.heartRate && p.heartRate > 0),
+              heartRateCount: parsed.chartData.filter((p: ChartDataPoint) => p.heartRate && p.heartRate > 0).length,
+              sampleHeartRates: parsed.chartData.slice(0, 5).map((p: ChartDataPoint) => ({
                 distance: p.distance,
                 heartRate: p.heartRate
               }))
@@ -360,7 +360,7 @@ export default function HomePage() {
             console.log('🔍 HomePage: Full parsed object:', parsed)
             
             // If we have heart rate data in chartData, enable heart rate
-            if (parsed.chartData && parsed.chartData.some((p: any) => p.heartRate && p.heartRate > 0)) {
+            if (parsed.chartData && parsed.chartData.some((p: ChartDataPoint) => p.heartRate && p.heartRate > 0)) {
               console.log('💡 HomePage: Found HR data in chartData, enabling heart rate settings')
               setPaceHeartRateSettings(prev => ({
                 ...prev,

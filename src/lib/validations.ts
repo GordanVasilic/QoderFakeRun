@@ -15,8 +15,17 @@ export const RouteDataSchema = z.object({
   duration: z.number().min(0).max(86400), // max 24 hours
   elevationGain: z.number().min(0).max(10000), // max 10km elevation
   averagePace: z.number().min(1).max(20), // reasonable pace range
-  paceHeartRateSettings: z.any().optional(),
-  routeGeometry: z.any().optional(), // Complete route geometry from Mapbox
+  paceHeartRateSettings: z.object({
+    averagePace: z.number(),
+    paceInconsistency: z.number(),
+    includeHeartRate: z.boolean(),
+    averageHeartRate: z.number(),
+    heartRateVariability: z.number()
+  }).optional(),
+  routeGeometry: z.object({
+    type: z.string(),
+    coordinates: z.array(z.tuple([z.number(), z.number()]))
+  }).optional(), // Complete route geometry from Mapbox
   routeCoordinates: z.array(z.tuple([z.number(), z.number()])).optional(), // Complete route coordinates [lng, lat]
   routeElevations: z.array(z.number()).optional(), // Elevation for each route coordinate
 })
@@ -57,7 +66,13 @@ export const RouteCreationSchema = z.object({
   activityType: z.enum(['run', 'bike']).optional().default('run'),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), // YYYY-MM-DD format
   startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(), // HH:MM format
-  paceHeartRateSettings: z.any().optional(),
+  paceHeartRateSettings: z.object({
+    averagePace: z.number(),
+    paceInconsistency: z.number(),
+    includeHeartRate: z.boolean(),
+    averageHeartRate: z.number(),
+    heartRateVariability: z.number()
+  }).optional(),
 })
 
 // User registration validation
@@ -98,7 +113,7 @@ export const ElevationRequestSchema = z.object({
 // Generic API response schemas
 export const ApiSuccessSchema = z.object({
   success: z.literal(true),
-  data: z.any(),
+  data: z.unknown(),
   message: z.string().optional(),
 })
 
@@ -106,7 +121,7 @@ export const ApiErrorSchema = z.object({
   success: z.literal(false),
   error: z.string(),
   code: z.string().optional(),
-  details: z.any().optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
 })
 
 // Type exports
@@ -118,7 +133,7 @@ export type UserRegistration = z.infer<typeof UserRegistrationSchema>
 export type UserLogin = z.infer<typeof UserLoginSchema>
 export type RouteSearch = z.infer<typeof RouteSearchSchema>
 export type ElevationRequest = z.infer<typeof ElevationRequestSchema>
-export type ApiSuccess<T = any> = {
+export type ApiSuccess<T = unknown> = {
   success: true
   data: T
   message?: string
@@ -127,5 +142,5 @@ export type ApiError = {
   success: false
   error: string
   code?: string
-  details?: any
+  details?: Record<string, unknown>
 }

@@ -92,7 +92,40 @@ export class NetworkMonitor {
       return { available: false };
     }
 
-    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    const connection = (navigator as {
+      connection?: {
+        effectiveType?: string;
+        downlink?: number;
+        rtt?: number;
+        saveData?: boolean;
+      };
+      mozConnection?: {
+        effectiveType?: string;
+        downlink?: number;
+        rtt?: number;
+        saveData?: boolean;
+      };
+      webkitConnection?: {
+        effectiveType?: string;
+        downlink?: number;
+        rtt?: number;
+        saveData?: boolean;
+      };
+    }).connection || (navigator as {
+       mozConnection?: {
+         effectiveType?: string;
+         downlink?: number;
+         rtt?: number;
+         saveData?: boolean;
+       };
+     }).mozConnection || (navigator as {
+       webkitConnection?: {
+         effectiveType?: string;
+         downlink?: number;
+         rtt?: number;
+         saveData?: boolean;
+       };
+     }).webkitConnection;
     
     return {
       online: navigator.onLine,

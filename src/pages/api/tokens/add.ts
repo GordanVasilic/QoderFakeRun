@@ -51,7 +51,7 @@ export default async function handler(
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
         const token = authHeader.substring(7);
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as { userId: string };
         userId = decoded.userId;
       } catch (error) {
         console.error('Token verification failed:', error);

@@ -12,7 +12,7 @@ const CreatePaymentIntentSchema = z.object({
 
 // Create payment intent for direct payment in modal
 export async function POST(request: NextRequest) {
-  let body: any;
+  let body: unknown;
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
@@ -50,7 +50,18 @@ export async function POST(request: NextRequest) {
     }
     
     // Return payment intent details
-    const response: any = {
+    const response: {
+      success: boolean;
+      data: {
+        clientSecret: string;
+        paymentIntentId: string;
+        paymentId: string;
+        amount: number;
+        packageName: string;
+        tokens: number;
+      };
+      anonymousId?: string;
+    } = {
       success: true,
       data: {
         clientSecret: result.clientSecret,

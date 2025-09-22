@@ -59,7 +59,15 @@ export async function POST(request: NextRequest) {
     }
     
     // Return checkout session and anonymousId if applicable
-    const response: any = {
+    const response: {
+      success: boolean;
+      data: {
+        sessionId: string;
+        sessionUrl: string;
+        paymentId: string;
+        anonymousId?: string;
+      };
+    } = {
       success: true,
       data: {
         sessionId: result.sessionId,

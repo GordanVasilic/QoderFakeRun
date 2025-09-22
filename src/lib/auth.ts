@@ -62,10 +62,10 @@ export const authService = {
   },
 
   // Register a new user
-  async register(data: RegisterData): Promise<{ user: any; token: string } | { error: string }> {
+  async register(data: RegisterData): Promise<{ user: UserSession; token: string } | { error: string }> {
     try {
       // Check if user already exists
-      const orConditions: any[] = [{ email: data.email }];
+      const orConditions: Array<{ email: string } | { username: string }> = [{ email: data.email }];
       if (data.username) {
         orConditions.push({ username: data.username });
       }
@@ -130,7 +130,7 @@ export const authService = {
   },
 
   // Login a user
-  async login(credentials: LoginCredentials): Promise<{ user: any; token: string } | { error: string }> {
+  async login(credentials: LoginCredentials): Promise<{ user: UserSession; token: string } | { error: string }> {
     try {
       // Find user by email
       const user = await db.user.findUnique({
@@ -185,7 +185,7 @@ export const authService = {
   },
 
   // Get user from token
-  async getUserFromToken(token: string): Promise<any | null> {
+  async getUserFromToken(token: string): Promise<UserSession | null> {
     try {
       console.log('🔍 getUserFromToken: Starting token verification...');
       const decoded = this.verifyToken(token);

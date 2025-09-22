@@ -6,6 +6,7 @@ import { useSavedRoutesStore } from '@/store/savedRoutesStore'
 import { useAuthStore } from '@/store/authStore'
 import SavedRouteCard from '@/components/SavedRouteCard'
 import type { SavedRoute } from '@/store/savedRoutesStore'
+import type { ChartDataPoint } from '@/types'
 
 export default function SavedRoutesPage() {
   const router = useRouter()
@@ -83,7 +84,7 @@ export default function SavedRoutesPage() {
     setLocalFilters(prev => ({ ...prev, [key]: value }))
     
     const filterValue = value === '' ? undefined : 
-      key.includes('Distance') ? Number(value) : value as any
+      key.includes('Distance') ? Number(value) : value as string
 
     setFilters({ [key]: filterValue })
   }
@@ -139,7 +140,7 @@ export default function SavedRoutesPage() {
           hasPaceHeartRateSettings: !!fullRoute.routeData?.paceHeartRateSettings,
           paceHeartRateSettings: fullRoute.routeData?.paceHeartRateSettings,
           chartDataLength: fullRoute.chartData?.length || 0,
-          hasHeartRateInChart: fullRoute.chartData?.some((d: any) => d.heartRate && d.heartRate > 0) || false
+          hasHeartRateInChart: fullRoute.chartData?.some((d: ChartDataPoint) => d.heartRate && d.heartRate > 0) || false
         })
         
         // Verify we now have the full route data
@@ -171,7 +172,7 @@ export default function SavedRoutesPage() {
             // Use reasonable defaults only if no saved settings exist
             averagePace: 5.5, // Default running pace
             paceInconsistency: 30,
-            includeHeartRate: fullRoute.chartData?.some((d: any) => d.heartRate && d.heartRate > 0) || false,
+            includeHeartRate: fullRoute.chartData?.some((d: ChartDataPoint) => d.heartRate && d.heartRate > 0) || false,
             averageHeartRate: 150,
             heartRateVariability: 20
           }
@@ -180,7 +181,7 @@ export default function SavedRoutesPage() {
         console.log('💾 SavedRoutes: Storing FULL route data with HR settings:', {
           hasRouteData: !!dataToStore.routeData,
           chartDataLength: dataToStore.chartData.length,
-          hasHeartRateInChart: dataToStore.chartData.some((d: any) => d.heartRate && d.heartRate > 0),
+          hasHeartRateInChart: dataToStore.chartData.some((d: ChartDataPoint) => d.heartRate && d.heartRate > 0),
           paceHeartRateSettings: dataToStore.paceHeartRateSettings,
           routeId: route.id
         })
@@ -227,10 +228,10 @@ export default function SavedRoutesPage() {
         // Fallback: store whatever data we have from the preview
         const fallbackData = {
           routeData: {
-            ...(route.routeData as Record<string, any> || {}),
+            ...(route.routeData as Record<string, unknown> || {}),
             // Try to extract coordinates and elevations from routeGeometry if available
-            routeCoordinates: (route.routeData as any)?.routeCoordinates || (route.routeData as any)?.routeGeometry?.coordinates || [],
-            routeElevations: (route.routeData as any)?.routeElevations || [],
+            routeCoordinates: (route.routeData as { routeCoordinates?: Array<[number, number]>; routeGeometry?: { coordinates?: Array<[number, number]> } })?.routeCoordinates || (route.routeData as { routeGeometry?: { coordinates?: Array<[number, number]> } })?.routeGeometry?.coordinates || [],
+            routeElevations: (route.routeData as { routeElevations?: number[] })?.routeElevations || [],
             // Include stats properties from the route stats object
             distance: route.stats?.distance || 0,
             duration: route.stats?.duration || 0,
@@ -243,7 +244,7 @@ export default function SavedRoutesPage() {
           description: route.description || '',
           date: route.date || new Date().toISOString().split('T')[0],
           startTime: route.startTime || '12:00',
-          previewData: (route as any).previewData  // Store preview data as backup
+          previewData: (route as SavedRoute & { previewData?: unknown }).previewData  // Store preview data as backup
         }
         
         // Store fallback data in sessionStorage
@@ -286,15 +287,15 @@ export default function SavedRoutesPage() {
         // Store the route data in sessionStorage for the main page to pick up
         const dataToStore = {
           routeData: {
-            ...(route.routeData as Record<string, any> || {}),
+            ...(route.routeData as Record<string, unknown> || {}),
             // Ensure all stats properties are included from both routeData and stats objects
             distance: route.routeData?.distance || route.stats?.distance || 0,
             duration: route.routeData?.duration || route.stats?.duration || 0,
             elevationGain: route.routeData?.elevationGain || route.stats?.elevationGain || 0,
             averagePace: route.routeData?.averagePace || route.stats?.averagePace || 5.5,
             // Ensure routeCoordinates and routeElevations are available for preview map
-            routeCoordinates: (route.routeData as any)?.routeCoordinates || (route.routeData as any)?.routeGeometry?.coordinates || [],
-            routeElevations: (route.routeData as any)?.routeElevations || []
+            routeCoordinates: (route.routeData as { routeCoordinates?: Array<[number, number]>; routeGeometry?: { coordinates?: Array<[number, number]> } })?.routeCoordinates || (route.routeData as { routeGeometry?: { coordinates?: Array<[number, number]> } })?.routeGeometry?.coordinates || [],
+            routeElevations: (route.routeData as { routeElevations?: number[] })?.routeElevations || []
           },
           chartData: route.chartData || [],
           activityType: route.activityType,
@@ -313,7 +314,7 @@ export default function SavedRoutesPage() {
             // Use reasonable defaults only if no saved settings exist
             averagePace: 5.5, // Default running pace
             paceInconsistency: 30,
-            includeHeartRate: route.chartData?.some((d: any) => d.heartRate && d.heartRate > 0) || false,
+            includeHeartRate: route.chartData?.some((d: ChartDataPoint) => d.heartRate && d.heartRate > 0) || false,
             averageHeartRate: 150,
             heartRateVariability: 20
           }
@@ -324,7 +325,7 @@ export default function SavedRoutesPage() {
           hasStoredPaceSettings: !!route.paceHeartRateSettings,
           storedPaceSettings: route.paceHeartRateSettings,
           chartDataLength: dataToStore.chartData.length,
-          hasHeartRateInChart: dataToStore.chartData.some((d: any) => d.heartRate && d.heartRate > 0),
+          hasHeartRateInChart: dataToStore.chartData.some((d: ChartDataPoint) => d.heartRate && d.heartRate > 0),
           finalPaceHeartRateSettings: dataToStore.paceHeartRateSettings,
           fullRouteObject: route,
           dataToStoreKeys: Object.keys(dataToStore),

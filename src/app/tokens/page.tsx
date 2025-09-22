@@ -12,7 +12,7 @@ function TokensContent() {
     { id: '3', name: 'Pro', tokens: 50, price: 39.99 },
     { id: '4', name: 'Premium', tokens: 100, price: 69.99 }
   ])
-  const [selectedPackage, setSelectedPackage] = useState<any>(null)
+  const [selectedPackage, setSelectedPackage] = useState<{ id: string; name: string; tokens: number; price: number } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { isAuthenticated } = useAuthStore()

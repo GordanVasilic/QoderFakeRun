@@ -93,7 +93,7 @@ export default function CombinedRouteChart({
   }, [])
 
   // Handle chart interactions
-  const handleChartMouseMove = useCallback((data: any) => {
+  const handleChartMouseMove = useCallback((data: { activePayload?: Array<{ payload: ChartDataPoint }> }) => {
     if (!editMode || !isDragging || activePoint === null) return
     // Chart editing logic would go here
   }, [editMode, isDragging, activePoint])
@@ -132,14 +132,14 @@ export default function CombinedRouteChart({
   }, [chartData, activityType, unitSystem])
 
   // Custom tooltip
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; dataKey: string; color: string }>; label?: string }) => {
     if (active && payload && payload.length) {
       const distanceUnit = unitSystem === 'imperial' ? 'mi' : 'km'
       
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="text-sm font-medium text-gray-900">{`Distance: ${label} ${distanceUnit}`}</p>
-          {payload.map((entry: any, index: number) => {
+          {payload.map((entry: { value: number; dataKey: string; color: string }, index: number) => {
             if (!metricVisibility[entry.dataKey as keyof MetricVisibility]) return null
             
             let value = entry.value

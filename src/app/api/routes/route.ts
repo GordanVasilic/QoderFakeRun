@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { routeLimiter, generalLimiter, getClientIP } from '@/lib/rateLimit'
 import { RouteCreationSchema, RouteSearchSchema } from '@/lib/validations'
 // Import with fallback handling
-let routesService: any
+let routesService: typeof import('@/lib/routesService').routesService
 try {
   routesService = require('@/lib/routesService').routesService
 } catch (error) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // Get user from authentication
-    let user: any = null
+    let user: { id: string; email: string; role: string } | null = null
 
     // Try admin bypass first
     const authHeader = request.headers.get('authorization')
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       try {
         const JWT_SECRET = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
         console.log('🔍 POST route - Using JWT secret:', JWT_SECRET)
-        const decoded = jwt.verify(token, JWT_SECRET) as any
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string }
         console.log('🔍 POST route - Token decoded successfully:', { id: decoded.id, email: decoded.email })
         if (decoded.id === 'cmeu1kwjg0000w5zgh3xdrxma' && decoded.email === 'admin@qoderfakerun.com') {
           user = {
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       routeData,
       chartData,
       isPublic,
-      activityType: activityType?.toUpperCase() as any,
+      activityType: activityType?.toUpperCase() as 'RUN' | 'BIKE',
       tags,
       paceHeartRateSettings
     })
@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Get user from authentication
-    let user: any = null
+    let user: { id: string; email: string; role: string } | null = null
     let userId: string | undefined = undefined
 
     // Try admin bypass first
@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7)
       try {
-        const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production') as any
+        const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production') as { id: string; email: string }
         if (decoded.id === 'cmeu1kwjg0000w5zgh3xdrxma' && decoded.email === 'admin@qoderfakerun.com') {
           user = {
             id: 'cmeu1kwjg0000w5zgh3xdrxma',
@@ -286,7 +286,52 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform routes for response (add preview data)
-    const transformedRoutes = result.routes.map((route: any) => ({
+    const transformedRoutes = result.routes.map((route: {
+      id: string;
+      name: string;
+      description?: string;
+      date?: string;
+      startTime?: string;
+      activityType: string;
+      stats: {
+        distance: number;
+        duration: number;
+        elevationGain: number;
+        pointCount: number;
+        averagePace: number;
+        averageHeartRate?: number;
+        difficulty?: string;
+      };
+      createdAt: Date;
+      updatedAt: Date;
+      paceHeartRateSettings?: {
+        averagePace: number;
+        paceInconsistency: number;
+        includeHeartRate: boolean;
+        averageHeartRate: number;
+        heartRateVariability: number;
+      };
+      routeData?: {
+        points: Array<{ lat: number; lng: number; elevation?: number; timestamp?: number; pace?: number; heartRate?: number; distanceFromStart?: number }>;
+        distance: number;
+        duration: number;
+        elevationGain: number;
+        averagePace: number;
+        paceHeartRateSettings?: {
+          averagePace: number;
+          paceInconsistency: number;
+          includeHeartRate: boolean;
+          averageHeartRate: number;
+          heartRateVariability: number;
+        };
+        routeGeometry?: {
+          coordinates: Array<[number, number]>;
+          type: string;
+        };
+        routeCoordinates?: Array<[number, number]>;
+        routeElevations?: number[];
+      };
+    }) => ({
       id: route.id,
       name: route.name,
       description: route.description,

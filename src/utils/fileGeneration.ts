@@ -1,4 +1,4 @@
-import type { RouteData, RoutePoint, RunDetails } from '@/types'
+import type { RouteData, RoutePoint, RunDetails, ChartDataPoint } from '@/types'
 
 export interface FileGenerationOptions {
   name: string
@@ -10,7 +10,7 @@ export interface FileGenerationOptions {
 }
 
 // Generate GPX file content with full route coordinates
-export function generateGPX(routeData: RouteData, options: FileGenerationOptions, chartData?: any[]): string {
+export function generateGPX(routeData: RouteData, options: FileGenerationOptions, chartData?: ChartDataPoint[]): string {
   const { name, date, startTime, description } = options
   
   // Enhanced debug logging for heart rate
@@ -146,7 +146,7 @@ export function generateGPX(routeData: RouteData, options: FileGenerationOptions
 }
 
 // Generate TCX file content (Training Center XML) with full route coordinates
-export function generateTCX(routeData: RouteData, options: FileGenerationOptions, chartData?: any[]): string {
+export function generateTCX(routeData: RouteData, options: FileGenerationOptions, chartData?: ChartDataPoint[]): string {
   const { name, date, startTime, description, includeHeartRate, activityType } = options
   
   // Enhanced debug logging for heart rate

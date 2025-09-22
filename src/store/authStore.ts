@@ -7,7 +7,14 @@ import { networkMonitor } from '@/utils/networkMonitor';
 export interface AuthState {
   // Auth state
   isAuthenticated: boolean;
-  user: any | null; // User data
+  user: {
+    id: string;
+    email: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    [key: string]: unknown;
+  } | null; // User data
   token: string | null;
   tokenBalance: number;
   loading: boolean;
@@ -242,13 +249,14 @@ export const useAuthStore = create<AuthState>()(
                     throw new Error(`Server error ${response.status}: Failed to fetch wallet balance after ${maxRetries} attempts`);
                   }
                 }
-              } catch (error: any) {
-                const isAbortError = error.name === 'AbortError';
-                const isNetworkError = error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch');
+              } catch (error: unknown) {
+                const errorObj = error as Error;
+                const isAbortError = errorObj.name === 'AbortError';
+                const isNetworkError = errorObj.message.includes('fetch') || errorObj.message.includes('network') || errorObj.message.includes('Failed to fetch');
                 
                 console.warn(`⚠️ [authStore] Attempt ${attempt} failed:`, {
-                  message: error.message,
-                  name: error.name,
+                  message: errorObj.message,
+                  name: errorObj.name,
                   isAbortError,
                   isNetworkError
                 });

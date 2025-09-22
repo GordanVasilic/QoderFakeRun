@@ -23,7 +23,10 @@ export interface RouteData {
   elevationGain: number // in meters
   averagePace: number // in min/km
   paceHeartRateSettings?: PaceHeartRateSettings
-  routeGeometry?: any // Complete route geometry from Mapbox
+  routeGeometry?: {
+    type: string;
+    coordinates: Array<[number, number]>;
+  } // Complete route geometry from Mapbox
   routeCoordinates?: Array<[number, number]> // Complete route coordinates [lng, lat]
   routeElevations?: number[] // Elevation for each route coordinate
 }

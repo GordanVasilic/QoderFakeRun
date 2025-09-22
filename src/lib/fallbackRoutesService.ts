@@ -1,4 +1,6 @@
 // Temporary fallback service while fixing Prisma issues
+import type { RouteData, ChartDataPoint, PaceHeartRateSettings } from '@/types'
+
 export const fallbackRoutesService = {
   async getRoutes({
     userId,
@@ -113,7 +115,13 @@ export const fallbackRoutesService = {
     return null
   },
 
-  async createRoute(data: any) {
+  async createRoute(data: {
+    name?: string;
+    routeData?: RouteData;
+    description?: string;
+    activityType?: string;
+    [key: string]: unknown;
+  }) {
     console.log('🔄 Fallback service active - Creating route in memory')
     
     // Generate a temporary ID
@@ -168,7 +176,28 @@ export const fallbackRoutesService = {
     return exists
   },
 
-  async updateRouteByName(userId: string, routeName: string, routeData: any, chartData: any, activityType: string, description: string, date: string, startTime: string, paceHeartRateSettings: any): Promise<any> {
+  async updateRouteByName(
+    userId: string, 
+    routeName: string, 
+    routeData: RouteData, 
+    chartData: ChartDataPoint[], 
+    activityType: string, 
+    description: string, 
+    date: string, 
+    startTime: string, 
+    paceHeartRateSettings: PaceHeartRateSettings
+  ): Promise<{
+    id: string;
+    name: string;
+    createdAt: Date;
+    stats: {
+      distance: number;
+      duration: number;
+      elevationGain: number;
+      pointCount: number;
+      averagePace: number;
+    };
+  }> {
     console.log('🔄 Fallback service active - Route overwrite temporarily disabled')
     
     // Generate a temporary ID for the "overwritten" route

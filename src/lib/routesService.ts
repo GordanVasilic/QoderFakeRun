@@ -45,7 +45,7 @@ class RoutesService {
     isPublic?: boolean
     activityType?: 'RUN' | 'BIKE' | 'WALK' | 'HIKE'
     tags?: string[]
-    paceHeartRateSettings?: any
+    paceHeartRateSettings?: PaceHeartRateSettings
   }) {
     console.log('💾 RoutesService.createRoute - Received paceHeartRateSettings:', {
       hasPaceHeartRateSettings: !!paceHeartRateSettings,
@@ -228,7 +228,7 @@ class RoutesService {
   }
 
   // Update existing route (overwrite)
-  async updateRouteByName(userId: string, routeName: string, routeData: any, chartData: any, activityType: string, description: string, date: string, startTime: string, paceHeartRateSettings: any): Promise<any> {
+  async updateRouteByName(userId: string, routeName: string, routeData: RouteData, chartData: ChartDataPoint[], activityType: string, description: string, date: string, startTime: string, paceHeartRateSettings: PaceHeartRateSettings): Promise<{ id: string; name: string; description?: string; routeData: RouteData; chartData: ChartDataPoint[]; activityType: string; date?: string; startTime?: string; paceHeartRateSettings?: PaceHeartRateSettings }> {
     try {
       // Debug: Log the routeData to see what fields it contains
       console.log('🔍 updateRouteByName: routeData keys:', Object.keys(routeData))
@@ -253,7 +253,7 @@ class RoutesService {
       const updateData = {
         name: routeName,
         description: description || '',
-        activityType: activityType.toUpperCase() as any,
+        activityType: activityType.toUpperCase() as 'RUN' | 'BIKE' | 'WALK' | 'HIKE',
         date: date,
         startTime: startTime,
         distance: routeData.distance || 0,
@@ -311,7 +311,7 @@ class RoutesService {
 
         // Create new chart data
         await this.prisma.routeChartData.createMany({
-          data: chartData.map((point: any, index: number) => ({
+          data: chartData.map((point: ChartDataPoint, index: number) => ({
             routeId: updatedRoute.id,
             distance: point.distance || 0,
             elevation: point.elevation || 0,
@@ -374,7 +374,7 @@ class RoutesService {
     const offset = (page - 1) * limit
 
     // Build WHERE conditions for Prisma
-    const where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (userId) {
       where.userId = userId
@@ -446,7 +446,7 @@ class RoutesService {
     }
 
     // Build ORDER BY for Prisma
-    const orderBy: any = {}
+    const orderBy: Record<string, 'asc' | 'desc'> = {}
     orderBy[sortBy] = sortOrder
 
     try {
@@ -608,15 +608,15 @@ class RoutesService {
               createdAt: route.createdAt,
               updatedAt: route.updatedAt,
               routeData: {
-                points: waypoints.map((wp: any) => ({
+                points: waypoints.map((wp: { latitude: number; longitude: number; elevation: number | null }) => ({
                   lat: wp.latitude,
                   lng: wp.longitude,
                   elevation: wp.elevation
                 })),
-                coordinates: storedRouteCoordinates || routeGeometry?.coordinates || waypoints.map((wp: any) => [wp.longitude, wp.latitude]),
+                coordinates: storedRouteCoordinates || routeGeometry?.coordinates || waypoints.map((wp: { latitude: number; longitude: number }) => [wp.longitude, wp.latitude]),
                 routeGeometry: routeGeometry,
-                routeCoordinates: storedRouteCoordinates || routeGeometry?.coordinates || waypoints.map((wp: any) => [wp.longitude, wp.latitude]),
-                routeElevations: storedRouteElevations || chartData.map((cd: any) => cd.elevation || 0)
+                routeCoordinates: storedRouteCoordinates || routeGeometry?.coordinates || waypoints.map((wp: { latitude: number; longitude: number }) => [wp.longitude, wp.latitude]),
+                routeElevations: storedRouteElevations || chartData.map((cd: { elevation: number | null }) => cd.elevation || 0)
               }
             }
           }),
@@ -638,7 +638,7 @@ class RoutesService {
   async getRouteById(id: string, userId?: string) {
     try {
       // Build where clause for Prisma
-      const where: any = { id }
+      const where: { id: string; userId?: string } = { id }
       if (userId) {
         where.userId = userId
       }
@@ -733,7 +733,7 @@ class RoutesService {
       
       // Build route data object
       const routeData: RouteData = {
-        points: waypoints.map((wp: any) => ({
+        points: waypoints.map((wp: { latitude: number; longitude: number; elevation: number | null }) => ({
           lat: wp.latitude,
           lng: wp.longitude,
           elevation: wp.elevation
@@ -743,7 +743,7 @@ class RoutesService {
         elevationGain: route.elevationGain,
         averagePace: route.averagePace,
         routeGeometry: routeGeometry, // Contains actual PostGIS geometry as GeoJSON
-        routeCoordinates: storedRouteCoordinates || routeGeometry?.coordinates || waypoints.map((wp: any) => [wp.longitude, wp.latitude]),
+        routeCoordinates: storedRouteCoordinates || routeGeometry?.coordinates || waypoints.map((wp: { latitude: number; longitude: number }) => [wp.longitude, wp.latitude]),
         routeElevations: storedRouteElevations || chartData.map(cd => cd.elevation || 0),
         paceHeartRateSettings: (route.paceHeartRateSettings as unknown as PaceHeartRateSettings) || undefined
       }
@@ -799,7 +799,7 @@ class RoutesService {
   async deleteRoute(id: string, userId?: string) {
     try {
       // Build where clause for Prisma
-      const where: any = { id }
+      const where: { id: string; userId?: string } = { id }
       if (userId) {
         where.userId = userId
       }

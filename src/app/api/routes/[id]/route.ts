@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 // Import with fallback handling
-let routesService: any
+let routesService: typeof import('@/lib/routesService').routesService
 try {
   routesService = require('@/lib/routesService').routesService
 } catch (error) {
   console.warn('Prisma service unavailable, using fallback:', error instanceof Error ? error.message : String(error))
   routesService = require('@/lib/fallbackRoutesService').fallbackRoutesService
 }
-import { isAuthenticated } from '@/lib/auth'
+import { isAuthenticated, UserSession } from '@/lib/auth'
 import { generalLimiter, getClientIP } from '@/lib/rateLimit'
 import jwt from 'jsonwebtoken'
 
@@ -22,7 +22,7 @@ export async function GET(
 
     // TEMPORARY: Handle admin user bypass for route fetching
     const authHeader = request.headers.get('authorization');
-    let user = null;
+    let user: UserSession | null = null;
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
@@ -31,7 +31,7 @@ export async function GET(
       const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key-here';
       
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload & UserSession;
         
         // If this is the admin temp user, create user object without database lookup
         if (decoded.id === 'cmeu1kwjg0000w5zgh3xdrxma' && decoded.email === 'admin@qoderfakerun.com') {
@@ -114,7 +114,7 @@ export async function DELETE(
 
     // TEMPORARY: Handle admin user bypass for delete endpoint
     const authHeader = request.headers.get('authorization');
-    let user = null;
+    let user: UserSession | null = null;
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
@@ -123,7 +123,7 @@ export async function DELETE(
       const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key-here';
       
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload & UserSession;
         
         // If this is the admin temp user, create user object without database lookup
         if (decoded.id === 'cmeu1kwjg0000w5zgh3xdrxma' && decoded.email === 'admin@qoderfakerun.com') {

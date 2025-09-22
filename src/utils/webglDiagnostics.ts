@@ -108,7 +108,13 @@ export function getWebGLDiagnostics(canvas?: HTMLCanvasElement): WebGLDiagnostic
 
     // Get memory info if available
     if ('memory' in performance) {
-      const memInfo = (performance as any).memory
+      const memInfo = (performance as {
+        memory?: {
+          totalJSHeapSize?: number;
+          usedJSHeapSize?: number;
+          jsHeapSizeLimit?: number;
+        };
+      }).memory;
       diagnostics.memoryInfo = {
         totalJSHeapSize: memInfo.totalJSHeapSize,
         usedJSHeapSize: memInfo.usedJSHeapSize,

@@ -120,19 +120,19 @@ export const TokenBalance: React.FC<TokenBalanceProps> = ({
       console.log('✅ [TokenBalance] Wallet loaded successfully with server balance');
       
       // Token packages are now static from service
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('❌ [TokenBalance] Failed to load wallet:', error);
       
       // Provide more user-friendly error messages
       let errorMessage = 'Failed to load wallet';
-      if (error.message.includes('timeout') || error.message.includes('aborted')) {
+      if (error instanceof Error && (error.message.includes('timeout') || error.message.includes('aborted'))) {
         errorMessage = 'Wallet loading timed out. Please try again.';
-      } else if (error.message.includes('Failed to fetch')) {
+      } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
         errorMessage = 'Unable to connect to wallet service. Please check your connection and try again.';
-      } else if (error.message.includes('Anonymous ID not available')) {
+      } else if (error instanceof Error && error.message.includes('Anonymous ID not available')) {
         errorMessage = 'Session error. Please refresh the page.';
       } else {
-        errorMessage = `Failed to load wallet: ${error.message}`;
+        errorMessage = `Failed to load wallet: ${error instanceof Error ? error.message : 'Unknown error occurred'}`;
       }
       
       setError(errorMessage);

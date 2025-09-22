@@ -19,7 +19,7 @@ const prisma = getPrismaClient();
 const mockStripe = {
   checkout: {
     sessions: {
-      create: async (params: any) => {
+      create: async (params: { line_items: Array<{ price_data: { currency: string; product_data: { name: string }; unit_amount: number }; quantity: number }>; mode: string; success_url: string; cancel_url: string; metadata?: Record<string, string> }) => {
         const sessionId = `cs_test_${Math.random().toString(36).substring(2, 15)}`;
         
         // Log the request for debugging
@@ -35,7 +35,7 @@ const mockStripe = {
   },
   
   paymentIntents: {
-    create: async (params: any) => {
+    create: async (params: { amount: number; currency: string; metadata?: Record<string, string> }) => {
       const paymentIntentId = `pi_test_${Math.random().toString(36).substring(2, 15)}`;
       
       // Log the request for debugging
@@ -51,7 +51,7 @@ const mockStripe = {
       };
     },
     
-    confirm: async (paymentIntentId: string, params: any) => {
+    confirm: async (paymentIntentId: string, params: { payment_method?: string; return_url?: string }) => {
       console.log('Confirming payment intent:', paymentIntentId, params);
       
       // Mock successful confirmation

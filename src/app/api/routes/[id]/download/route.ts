@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generalLimiter, getClientIP } from '@/lib/rateLimit'
 import { tokenService } from '@/utils/tokenService'
+import type { RouteData, ChartDataPoint } from '@/types'
 
 // Helper function to get routes (same as in [id]/route.ts)
 function getRoutes() {
@@ -55,7 +56,7 @@ export async function GET(
     }
     
     const allRoutes = getRoutes()
-    const route = allRoutes.find((r: any) => r.id === id)
+    const route = allRoutes.find((r: { id: string; routeData: RouteData; chartData?: ChartDataPoint[]; name: string; createdAt: string; description?: string }) => r.id === id)
     
     if (!route) {
       return NextResponse.json({
@@ -74,7 +75,7 @@ export async function GET(
         date: new Date(route.createdAt).toISOString().split('T')[0],
         startTime: '09:00', // Default start time
         description: route.description || '',
-        includeHeartRate: route.chartData?.some((d: any) => d.heartRate) || false,
+        includeHeartRate: route.chartData?.some((d: ChartDataPoint) => d.heartRate) || false,
         activityType: route.routeData.activityType || 'run'
       },
       format: format as 'gpx' | 'tcx' | 'both'

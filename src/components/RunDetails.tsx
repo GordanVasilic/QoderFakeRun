@@ -11,7 +11,7 @@ import type { RouteData, PaceHeartRateSettings } from '@/types'
 
 interface RunDetailsProps {
   routeData: RouteData
-  chartData?: any[] // From the interactive charts
+  chartData?: Array<{ distance: number; pace: number; elevation: number; heartRate?: number }>  // From the interactive charts
   activityType: 'run' | 'bike'
   paceHeartRateSettings?: PaceHeartRateSettings
   onSaveRoute?: () => void
@@ -161,8 +161,8 @@ export default function RunDetails({
         }
       )
       
-    } catch (error) {
-      console.error('Unexpected error:', error)
+    } catch (_error) {
+      console.error('Unexpected error:', _error)
       showError('An unexpected error occurred. Please try again.')
     } finally {
       setIsGenerating(false)

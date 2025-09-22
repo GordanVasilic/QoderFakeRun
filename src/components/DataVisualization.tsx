@@ -78,7 +78,7 @@ export default function DataVisualization({ routeData }: DataVisualizationProps)
                   label={{ value: 'Pace (min/km)', angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip 
-                  formatter={(value: any) => [formatPace(value), 'Pace']}
+                  formatter={(value: number) => [formatPace(value), 'Pace']}
                   labelFormatter={(label) => `Distance: ${label} km`}
                   contentStyle={{
                     backgroundColor: 'white',
@@ -131,7 +131,7 @@ export default function DataVisualization({ routeData }: DataVisualizationProps)
                   label={{ value: 'Elevation (m)', angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip 
-                  formatter={(value: any) => [`${Math.round(value)}m`, 'Elevation']}
+                  formatter={(value: number) => [`${Math.round(value)}m`, 'Elevation']}
                   labelFormatter={(label) => `Distance: ${label} km`}
                   contentStyle={{
                     backgroundColor: 'white',

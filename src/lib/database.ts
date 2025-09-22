@@ -204,7 +204,23 @@ class DatabaseService {
 
   // Get route with full details
   async getRouteById(routeId: string, includeWaypoints = false) {
-    const route = await this.prisma.$queryRaw`
+    const route = await this.prisma.$queryRaw<Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      distance: number;
+      duration: number;
+      elevationGain: number;
+      averagePace: number;
+      activityType: string;
+      pointCount: number;
+      isPublic: boolean;
+      createdAt: Date;
+      geometry_json: string;
+      firstName: string;
+      lastName: string;
+      username: string | null;
+    }>>`
       SELECT 
         r.id, r.name, r.description, r.distance, r.duration,
         r.\"elevationGain\", r.\"averagePace\", r.\"activityType\",
@@ -214,7 +230,7 @@ class DatabaseService {
       FROM routes r
       JOIN users u ON r.\"userId\" = u.id
       WHERE r.id = ${routeId}
-    ` as any[]
+    `
 
     if (route.length === 0) return null
 
@@ -239,14 +255,18 @@ class DatabaseService {
 
   // Calculate route statistics
   async calculateRouteStats(routeId: string) {
-    const stats = await this.prisma.$queryRaw`
+    const stats = await this.prisma.$queryRaw<Array<{
+      calculated_distance: number;
+      point_count: number;
+      elevation_gain: number;
+    }>>`
       SELECT 
         ST_Length(ST_Transform(geometry, 3857)) / 1000.0 as calculated_distance,
         ST_NPoints(geometry) as point_count,
         calculate_elevation_gain(${routeId}) as elevation_gain
       FROM routes
       WHERE id = ${routeId}
-    ` as any[]
+    `
 
     return stats[0] || null
   }
@@ -273,7 +293,7 @@ class DatabaseService {
     
     // Build dynamic WHERE clause
     let whereClause = '\"isPublic\" = true'
-    const params: any[] = []
+    const params: (string | number)[] = []
     
     if (query) {
       whereClause += ` AND (name ILIKE $${params.length + 1} OR description ILIKE $${params.length + 1})`
@@ -348,7 +368,7 @@ export const routeHelpers = {
   },
 
   // Convert GeoJSON to RoutePoint array
-  geoJsonToPoints: (geoJson: any): RoutePoint[] => {
+  geoJsonToPoints: (geoJson: { type: string; coordinates: Array<[number, number]> }): RoutePoint[] => {
     if (geoJson.type !== 'LineString') return []
     
     return geoJson.coordinates.map(([lng, lat]: [number, number]) => ({

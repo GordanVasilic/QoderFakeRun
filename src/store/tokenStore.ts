@@ -29,7 +29,7 @@ export interface TokenState {
   fetchPackages: () => Promise<TokenPackage[]>;
   selectPackage: (packageId: string) => void;
   purchaseTokens: (successUrl: string, cancelUrl: string) => Promise<string | null>;
-  checkPaymentStatus: (paymentId: string) => Promise<{ success: boolean; data?: any; error?: string; }>;
+  checkPaymentStatus: (paymentId: string) => Promise<{ success: boolean; data?: { status: string; tokens?: number; [key: string]: unknown }; error?: string; }>;
   resetState: () => void;
 }
 
@@ -101,13 +101,18 @@ export const useTokenStore = create<TokenState>()(
           const authState = useAuthStore.getState();
           
           // Prepare request data
-          const requestData: any = {
+          const requestData: {
+            packageId: string;
+            successUrl: string;
+            cancelUrl: string;
+            anonymousId?: string;
+          } = {
             packageId: selectedPackage.id,
             successUrl,
             cancelUrl
           };
           
-          const headers: any = { 'Content-Type': 'application/json' };
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
           
           // Use authentication if available
           if (authState.isAuthenticated && authState.token) {

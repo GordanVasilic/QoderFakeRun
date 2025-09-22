@@ -69,7 +69,7 @@ export async function GET(request: Request) {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : 'No stack trace',
       name: error instanceof Error ? error.name : 'Unknown',
-      code: (error as any)?.code || 'No code'
+      code: (error as Error & { code?: string })?.code || 'No code'
     });
     
     // More specific error handling

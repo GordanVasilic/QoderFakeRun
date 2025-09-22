@@ -89,8 +89,8 @@ export default function SavedRouteCard({ route, viewMode, onLoad }: SavedRouteCa
         const errorData = await response.json().catch(() => ({ error: 'Download failed' }))
         toast.error(errorData.error || 'Download failed')
       }
-    } catch (error) {
-      console.error('Download failed:', error)
+    } catch (_error) {
+      console.error('Download failed:', _error)
       toast.error('Download failed. Please try again.')
     } finally {
       setIsDownloading(null)
