@@ -36,8 +36,13 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // For anonymous users
-    const anonymousId = request.cookies.get('anonymousId')?.value;
+    // For anonymous users - check cookies first, then query parameters as fallback
+    let anonymousId = request.cookies.get('anonymousId')?.value;
+    if (!anonymousId) {
+      const url = new URL(request.url);
+      anonymousId = url.searchParams.get('anonymousId') || undefined;
+    }
+    
     if (anonymousId) {
       const anonymousTokens = await prisma.anonymousToken.findUnique({
         where: { anonymousId }
@@ -79,7 +84,10 @@ export async function POST(request: NextRequest) {
     
     // Parse and validate request
     const body = await request.json();
+    console.log('🔍 [POST /api/tokens] Received request body:', JSON.stringify(body, null, 2));
+    
     const validatedData = PurchaseTokensSchema.parse(body);
+    console.log('✅ [POST /api/tokens] Validation successful:', JSON.stringify(validatedData, null, 2));
     
     // Check if user is authenticated
     const user = await isAuthenticated(request);
@@ -137,12 +145,16 @@ export async function POST(request: NextRequest) {
     }
     
     // Handle validation errors
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof z.ZodError) {
+      console.error('❌ [POST /api/tokens] Validation error:', {
+        issues: error.issues,
+        receivedData: await request.json().catch(() => 'Could not parse body again')
+      });
       return NextResponse.json({
         success: false,
         error: 'Invalid request data',
         code: 'VALIDATION_ERROR',
-        details: error.message
+        details: error.issues
       }, { status: 400 });
     }
     

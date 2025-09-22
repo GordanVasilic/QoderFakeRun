@@ -1,4 +1,4 @@
-import { db, getPrismaClient } from './prisma';
+import { db } from './prisma';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 
@@ -70,7 +70,7 @@ export const authService = {
         orConditions.push({ username: data.username });
       }
       
-      const existingUser = await getPrismaClient().user.findFirst({
+      const existingUser = await db.user.findFirst({
         where: {
           OR: orConditions,
         },
@@ -84,7 +84,7 @@ export const authService = {
       const passwordHash = await this.hashPassword(data.password);
 
       // Create user
-      const user = await getPrismaClient().user.create({
+      const user = await db.user.create({
         data: {
           email: data.email,
           username: data.username,
@@ -106,7 +106,7 @@ export const authService = {
       });
 
       // Update last login
-      await getPrismaClient().user.update({
+      await db.user.update({
         where: { id: user.id },
         data: { lastLoginAt: new Date() },
       });
@@ -133,7 +133,7 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<{ user: any; token: string } | { error: string }> {
     try {
       // Find user by email
-      const user = await getPrismaClient().user.findUnique({
+      const user = await db.user.findUnique({
         where: { email: credentials.email },
       });
       
@@ -161,7 +161,7 @@ export const authService = {
       });
 
       // Update last login
-      await getPrismaClient().user.update({
+      await db.user.update({
         where: { id: user.id },
         data: { lastLoginAt: new Date() },
       });
@@ -212,7 +212,7 @@ export const authService = {
         };
       }
       
-      const user = await getPrismaClient().user.findUnique({
+      const user = await db.user.findUnique({
         where: { id: decoded.id },
         select: {
           id: true,
@@ -243,7 +243,7 @@ export const authService = {
   // Initialize admin user if it doesn't exist
   async initAdminUser(): Promise<void> {
     try {
-      const adminUser = await getPrismaClient().user.findFirst({
+      const adminUser = await db.user.findFirst({
         where: { 
           OR: [
             { username: 'gogo' },
@@ -255,7 +255,7 @@ export const authService = {
 
       if (!adminUser) {
         const passwordHash = await this.hashPassword('gogo');
-        await getPrismaClient().user.create({
+        await db.user.create({
           data: {
             email: 'admin@qoderfakerun.com',
             username: 'gogo',

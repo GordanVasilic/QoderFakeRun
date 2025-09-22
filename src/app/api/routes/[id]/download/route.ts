@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generalLimiter, getClientIP } from '@/lib/rateLimit'
-import { isAuthenticated } from '@/lib/auth'
-import { tokenService } from '@/lib/tokens'
+import { tokenService } from '@/utils/tokenService'
 
 // Helper function to get routes (same as in [id]/route.ts)
 function getRoutes() {
@@ -32,29 +31,27 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'gpx'
 
-    // Check if user has tokens for download
-    const user = await isAuthenticated(request);
-    const anonymousId = request.cookies.get('anonymousId')?.value || searchParams.get('anonymousId');
+    // Get anonymous ID for token system
+    const anonymousId = searchParams.get('anonymousId') || request.headers.get('x-anonymous-id')
     
-    let hasTokens = false;
-    let tokenUserId = null;
-    let tokenAnonymousId = null;
-    
-    if (user) {
-      hasTokens = await tokenService.checkUserTokenBalance(user.id);
-      tokenUserId = user.id;
-    } else if (anonymousId) {
-      hasTokens = await tokenService.checkAnonymousTokenBalance(anonymousId);
-      tokenAnonymousId = anonymousId;
+    if (!anonymousId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Anonymous ID not found. Please refresh the page.',
+        code: 'ANONYMOUS_ID_MISSING'
+      }, { status: 400 })
     }
     
-    // If no tokens, return error
-    if (!hasTokens) {
+    // Check token balance
+    const wallet = await tokenService.getWallet(anonymousId)
+    
+    if (wallet.balance < 1) {
       return NextResponse.json({
         success: false,
         error: 'Insufficient tokens. Please purchase tokens to download routes.',
-        code: 'INSUFFICIENT_TOKENS'
-      }, { status: 402 }); // 402 Payment Required
+        code: 'INSUFFICIENT_TOKENS',
+        current_balance: wallet.balance
+      }, { status: 402 }) // 402 Payment Required
     }
     
     const allRoutes = getRoutes()
@@ -89,8 +86,9 @@ export async function GET(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-anonymous-id': anonymousId
       },
-      body: JSON.stringify(fileGenerationData)
+      body: JSON.stringify({ ...fileGenerationData, anonymousId })
     })
 
     if (!fileGenResponse.ok) {
@@ -107,25 +105,23 @@ export async function GET(
     const contentDisposition = fileGenResponse.headers.get('content-disposition') || 
       `attachment; filename="${route.name.replace(/[^a-zA-Z0-9]/g, '_')}.${format}"`
 
-    // Deduct tokens and track the download
-    if (tokenUserId) {
-      await tokenService.deductTokensFromUser(tokenUserId);
-      await tokenService.trackDownload({
-        routeId: id,
-        userId: tokenUserId,
-        format: format.toUpperCase() as any,
-        ipAddress: clientIP,
-        userAgent: request.headers.get('user-agent') || undefined
-      });
-    } else if (tokenAnonymousId) {
-      await tokenService.deductTokensFromAnonymousUser(tokenAnonymousId);
-      await tokenService.trackDownload({
-        routeId: id,
-        anonymousId: tokenAnonymousId,
-        format: format.toUpperCase() as any,
-        ipAddress: clientIP,
-        userAgent: request.headers.get('user-agent') || undefined
-      });
+    // Redeem token for download
+    try {
+      const redemptionResult = await tokenService.redeemTokens(1, request.url, anonymousId)
+      
+      if (!redemptionResult.success) {
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to redeem token',
+          code: 'TOKEN_REDEMPTION_FAILED'
+        }, { status: 400 })
+      }
+    } catch (redemptionError) {
+      return NextResponse.json({
+        success: false,
+        error: redemptionError instanceof Error ? redemptionError.message : 'Failed to redeem token',
+        code: 'TOKEN_REDEMPTION_FAILED'
+      }, { status: 400 })
     }
 
     return new NextResponse(blob, {

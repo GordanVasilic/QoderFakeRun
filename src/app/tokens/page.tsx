@@ -1,66 +1,92 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useTokenStore } from '@/store/tokenStore'
 import { useAuthStore } from '@/store/authStore'
 import { useRouter, useSearchParams } from 'next/navigation'
+import TokenBalance from '@/components/TokenBalance'
 
 function TokensContent() {
-  const { packages, fetchPackages, selectPackage, selectedPackage, purchaseTokens, isLoading, error, checkoutUrl } = useTokenStore()
-  const { isAuthenticated, user, tokenBalance, anonymousId, anonymousTokenBalance } = useAuthStore()
+  const [packages] = useState([
+    { id: '1', name: 'Starter', tokens: 5, price: 4.99 },
+    { id: '2', name: 'Basic', tokens: 15, price: 12.99 },
+    { id: '3', name: 'Pro', tokens: 50, price: 39.99 },
+    { id: '4', name: 'Premium', tokens: 100, price: 69.99 }
+  ])
+  const [selectedPackage, setSelectedPackage] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { isAuthenticated } = useAuthStore()
   const [pageState, setPageState] = useState<'select' | 'processing' | 'success' | 'error'>('select')
-  const [transactionId, setTransactionId] = useState<string | null>(null)
   
   const router = useRouter()
   const searchParams = useSearchParams()
   
   // Get query parameters for status checking
-  const sessionId = searchParams.get('session_id')
-  const paymentId = searchParams.get('payment_id')
+  const sessionId = searchParams?.get('session_id')
   
   useEffect(() => {
-    // Fetch token packages on component mount
-    fetchPackages()
-    
     // Check payment status if coming from checkout
-    if (sessionId && paymentId) {
-      setPageState('processing')
-      setTransactionId(paymentId)
+    if (sessionId) {
+      setPageState('success')
       
-      // Check payment status
-      const checkStatus = async () => {
-        const status = await useTokenStore.getState().checkPaymentStatus(paymentId)
-        
-        if (status === 'COMPLETED') {
-          setPageState('success')
-          
-          // Update token balance
-          await useAuthStore.getState().updateTokenBalance()
-        } else if (status === 'FAILED' || status === 'ERROR') {
-          setPageState('error')
-        }
-      }
+      // Clear URL parameters
+      const url = new URL(window.location.href)
+      url.searchParams.delete('session_id')
+      url.searchParams.delete('payment_id')
+      window.history.replaceState({}, '', url.toString())
+    } else if (searchParams?.get('canceled') === 'true') {
+      setPageState('error')
       
-      checkStatus()
+      // Clear URL parameters
+      const url = new URL(window.location.href)
+      url.searchParams.delete('canceled')
+      window.history.replaceState({}, '', url.toString())
     }
-  }, [fetchPackages, sessionId, paymentId])
+  }, [sessionId, searchParams])
   
   const handlePackageSelect = (packageId: string) => {
-    selectPackage(packageId)
+    const pkg = packages.find(p => p.id === packageId)
+    setSelectedPackage(pkg)
   }
   
   const handlePurchase = async () => {
     if (!selectedPackage) return
     
-    // Create success/cancel URLs
-    const successUrl = `${window.location.origin}/tokens`
-    const cancelUrl = `${window.location.origin}/tokens?canceled=true`
-    
-    const url = await purchaseTokens(successUrl, cancelUrl)
-    
-    if (url) {
-      // Redirect to checkout
-      window.location.href = url
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      // Create success/cancel URLs
+      const successUrl = `${window.location.origin}/tokens?session_id={CHECKOUT_SESSION_ID}`
+      const cancelUrl = `${window.location.origin}/tokens?canceled=true`
+      
+      const response = await fetch('/api/tokens/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          packageId: selectedPackage.id,
+          successUrl,
+          cancelUrl
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+      
+      if (data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url
+      }
+    } catch (err) {
+      console.error('Purchase error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to start checkout')
+    } finally {
+      setIsLoading(false)
     }
   }
   
@@ -91,7 +117,7 @@ function TokensContent() {
             <p className="text-gray-600 mt-2">Your tokens have been added to your account.</p>
             <div className="mt-6">
               <p className="text-lg font-semibold">
-                Current Balance: <span className="text-blue-600">{isAuthenticated ? tokenBalance : anonymousTokenBalance} tokens</span>
+                Current Balance: <TokenBalance size="lg" className="text-blue-600" />
               </p>
             </div>
             <div className="mt-8">
@@ -146,13 +172,9 @@ function TokensContent() {
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="text-lg font-semibold text-blue-800">Current Balance</h3>
-                    <p className="text-blue-700">
-                      {isAuthenticated
-                        ? `${tokenBalance} tokens`
-                        : anonymousId
-                          ? `${anonymousTokenBalance} tokens (Anonymous)`
-                          : 'No tokens (Anonymous)'}
-                    </p>
+                    <div className="text-blue-700">
+                      <TokenBalance size="lg" />
+                    </div>
                   </div>
                   
                   {!isAuthenticated && (
@@ -165,14 +187,14 @@ function TokensContent() {
                   )}
                 </div>
                 
-                {!isAuthenticated && (
-                  <p className="text-sm text-blue-600 mt-2">
-                    <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Anonymous tokens will expire after 30 days. Create an account to keep them permanently.
-                  </p>
-                )}
+                <p className="text-sm text-blue-600 mt-2">
+                  <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {isAuthenticated 
+                    ? 'Your tokens are safely stored in your account.'
+                    : 'Anonymous tokens are stored locally. Link your email for backup protection.'}
+                </p>
               </div>
             </div>
             

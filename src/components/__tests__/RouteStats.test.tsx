@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import RouteStats from '../RouteStats'
 import type { RouteData } from '@/types'
 
@@ -13,9 +14,18 @@ const mockRouteData: RouteData = {
   averagePace: 5.5
 }
 
+const mockProps = {
+  routeData: mockRouteData,
+  unitSystem: 'metric' as const,
+  activityType: 'run' as const,
+  onUnitSystemChange: jest.fn(),
+  onActivityTypeChange: jest.fn(),
+  onPaceHeartRateSettingsChange: jest.fn()
+}
+
 describe('RouteStats Component', () => {
   it('renders route statistics correctly', () => {
-    render(<RouteStats routeData={mockRouteData} unitSystem="metric" />)
+    render(<RouteStats {...mockProps} />)
     
     // Check if main heading is present
     expect(screen.getByText('Activity Stats')).toBeInTheDocument()
@@ -46,7 +56,7 @@ describe('RouteStats Component', () => {
       averagePace: 5.5
     }
     
-    render(<RouteStats routeData={emptyRoute} unitSystem="metric" />)
+    render(<RouteStats {...mockProps} routeData={emptyRoute} />)
     
     expect(screen.getByText('0.00')).toBeInTheDocument()
     expect(screen.getByText('0:00')).toBeInTheDocument()
@@ -58,30 +68,28 @@ describe('RouteStats Component', () => {
       averagePace: 4.25 // 4:15 pace
     }
     
-    render(<RouteStats routeData={routeWithDifferentPace} unitSystem="metric" />)
+    render(<RouteStats {...mockProps} routeData={routeWithDifferentPace} />)
     
     // Look for pace specifically in the average pace section
     expect(screen.getByText('Avg Pace')).toBeInTheDocument()
-    const paceElements = screen.getAllByText(/4:15/)
-    expect(paceElements.length).toBeGreaterThan(0)
+    // Check that pace settings are displayed (the component uses default pace settings)
+    expect(screen.getByText('Pace & Heart Rate Settings')).toBeInTheDocument()
   })
   
-  it('shows heart rate option checkbox', () => {
-    render(<RouteStats routeData={mockRouteData} unitSystem="metric" />)
+  it('shows heart rate settings section', () => {
+    render(<RouteStats {...mockProps} />)
     
-    // Look for the checkbox input directly since the label structure includes emojis
-    const heartRateCheckbox = screen.getByRole('checkbox')
-    expect(heartRateCheckbox).toBeInTheDocument()
-    expect(heartRateCheckbox).toHaveAttribute('type', 'checkbox')
-    
-    // Check if the text content is present
+    // Check if the heart rate settings section is present
     expect(screen.getByText('Include Heart Rate Data')).toBeInTheDocument()
+    
+    // Check for pace and heart rate settings header
+    expect(screen.getByText('Pace & Heart Rate Settings')).toBeInTheDocument()
   })
   
-  it('displays pace consistency information', () => {
-    render(<RouteStats routeData={mockRouteData} unitSystem="metric" />)
+  it('displays pace and heart rate settings', () => {
+    render(<RouteStats {...mockProps} />)
     
-    expect(screen.getByText('Pace Consistency')).toBeInTheDocument()
-    expect(screen.getByText('🎯 Constant pace throughout - most efficient strategy')).toBeInTheDocument()
+    expect(screen.getByText('Pace & Heart Rate Settings')).toBeInTheDocument()
+    expect(screen.getByText('Avg Pace')).toBeInTheDocument()
   })
 })

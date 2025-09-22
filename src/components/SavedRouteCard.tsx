@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import RouteStaticImage from '@/components/RouteStaticImage'
+import TokenRedemption from '@/components/TokenRedemption'
 import { formatDistance, formatDuration, formatPace } from '@/lib/utils'
+import { toast } from 'sonner'
 import type { RouteData } from '@/types'
 
 interface SavedRouteCardProps {
@@ -82,9 +84,14 @@ export default function SavedRouteCard({ route, viewMode, onLoad }: SavedRouteCa
         a.click()
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
+        toast.success(`${format.toUpperCase()} file downloaded successfully!`)
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Download failed' }))
+        toast.error(errorData.error || 'Download failed')
       }
     } catch (error) {
       console.error('Download failed:', error)
+      toast.error('Download failed. Please try again.')
     } finally {
       setIsDownloading(null)
     }
@@ -176,32 +183,16 @@ export default function SavedRouteCard({ route, viewMode, onLoad }: SavedRouteCa
               Load
             </button>
             
-            {/* Download Dropdown */}
-            <div className="relative group">
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </button>
-              
-              {/* Dropdown Menu */}
-              <div className="absolute right-0 bottom-full mb-1 w-24 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button
-                  onClick={() => handleDownload('gpx')}
-                  disabled={isDownloading === 'gpx'}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg disabled:opacity-50 cursor-pointer"
-                >
-                  {isDownloading === 'gpx' ? '...' : 'GPX'}
-                </button>
-                <button
-                  onClick={() => handleDownload('tcx')}
-                  disabled={isDownloading === 'tcx'}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded-b-lg disabled:opacity-50 cursor-pointer"
-                >
-                  {isDownloading === 'tcx' ? '...' : 'TCX'}
-                </button>
-              </div>
-            </div>
+            {/* Token Redemption for Download */}
+            <TokenRedemption
+              cost={1}
+              action="Download"
+              onRedeem={() => handleDownload('gpx')}
+              disabled={false}
+              isProcessing={isDownloading === 'gpx'}
+              processingText="Downloading..."
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            />
 
             {/* Delete Button */}
             <button
@@ -318,22 +309,26 @@ export default function SavedRouteCard({ route, viewMode, onLoad }: SavedRouteCa
             Load Route
           </button>
           
-          {/* Download Buttons */}
-          <button
-            onClick={() => handleDownload('gpx')}
-            disabled={isDownloading === 'gpx'}
-            className="px-3 py-2 text-gray-600 bg-gray-100 text-sm rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {isDownloading === 'gpx' ? '...' : 'GPX'}
-          </button>
+          {/* Token Redemption for Download */}
+          <TokenRedemption
+            cost={1}
+            action="Download GPX"
+            onRedeem={() => handleDownload('gpx')}
+            disabled={false}
+            isProcessing={isDownloading === 'gpx'}
+            processingText="Downloading..."
+            className="px-3 py-2 text-gray-600 bg-gray-100 text-sm rounded-lg hover:bg-gray-200 transition-colors"
+          />
           
-          <button
-            onClick={() => handleDownload('tcx')}
-            disabled={isDownloading === 'tcx'}
-            className="px-3 py-2 text-gray-600 bg-gray-100 text-sm rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {isDownloading === 'tcx' ? '...' : 'TCX'}
-          </button>
+          <TokenRedemption
+            cost={1}
+            action="Download TCX"
+            onRedeem={() => handleDownload('tcx')}
+            disabled={false}
+            isProcessing={isDownloading === 'tcx'}
+            processingText="Downloading..."
+            className="px-3 py-2 text-gray-600 bg-gray-100 text-sm rounded-lg hover:bg-gray-200 transition-colors"
+          />
 
           {/* Delete Button */}
           <button

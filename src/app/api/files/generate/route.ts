@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { fileLimiter, getClientIP } from '@/lib/rateLimit'
 import { FileGenerationSchema } from '@/lib/validations'
 import { generateGPX, generateTCX, generateRunSummary } from '@/utils/fileGeneration'
-import { isAuthenticated } from '@/lib/auth'
-import { tokenService } from '@/lib/tokens'
+import { tokenService } from '@/utils/tokenService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,29 +41,29 @@ export async function POST(request: NextRequest) {
     
     // Check if user has tokens for download (skip in development)
     const isDevelopment = process.env.NODE_ENV === 'development';
-    const user = await isAuthenticated(request);
-    const anonymousId = request.cookies.get('anonymousId')?.value || body.anonymousId;
-    
-    let hasTokens = isDevelopment; // Always true in development
-    let tokenUserId = null;
-    let tokenAnonymousId = null;
+    let anonymousId = null;
     
     if (!isDevelopment) {
-      if (user) {
-        hasTokens = await tokenService.checkUserTokenBalance(user.id);
-        tokenUserId = user.id;
-      } else if (anonymousId) {
-        hasTokens = await tokenService.checkAnonymousTokenBalance(anonymousId);
-        tokenAnonymousId = anonymousId;
+      // Get anonymousId from request body or headers
+      anonymousId = body.anonymousId || request.headers.get('x-anonymous-id');
+      
+      if (!anonymousId) {
+        return NextResponse.json({
+          success: false,
+          error: 'Anonymous ID not found. Please refresh the page.',
+          code: 'ANONYMOUS_ID_MISSING'
+        }, { status: 400 })
       }
       
-      // If no tokens, return error
-      if (!hasTokens) {
+      const wallet = await tokenService.getWallet(anonymousId)
+      
+      if (wallet.balance < 1) {
         return NextResponse.json({
           success: false,
           error: 'Insufficient tokens. Please purchase tokens to download routes.',
-          code: 'INSUFFICIENT_TOKENS'
-        }, { status: 402 }); // 402 Payment Required
+          code: 'INSUFFICIENT_TOKENS',
+          current_balance: wallet.balance
+        }, { status: 402 }) // 402 Payment Required
       }
     }
     
@@ -141,37 +140,25 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Deduct tokens and track the download (skip in development)
-    if (!isDevelopment) {
-      if (tokenUserId) {
-        await tokenService.deductTokensFromUser(tokenUserId);
-        await tokenService.trackDownload({
-          routeId: 'generated', // For generated routes without IDs
-          userId: tokenUserId,
-          format: format === 'both' ? 'GPX' : (format === 'gpx' ? 'GPX' : 'TCX'),
-          ipAddress: clientIP,
-          userAgent: request.headers.get('user-agent') || undefined
-        });
-      } else if (tokenAnonymousId) {
-        await tokenService.deductTokensFromAnonymousUser(tokenAnonymousId);
-        await tokenService.trackDownload({
-          routeId: 'generated',
-          anonymousId: tokenAnonymousId,
-          format: format === 'both' ? 'GPX' : (format === 'gpx' ? 'GPX' : 'TCX'),
-          ipAddress: clientIP,
-          userAgent: request.headers.get('user-agent') || undefined
-        });
+    // Redeem token for download (skip in development)
+    if (!isDevelopment && anonymousId) {
+      try {
+        const redemptionResult = await tokenService.redeemTokens(1, request.url, anonymousId)
+        
+        if (!redemptionResult.success) {
+          return NextResponse.json({
+            success: false,
+            error: 'Failed to redeem token',
+            code: 'TOKEN_REDEMPTION_FAILED'
+          }, { status: 400 })
+        }
+      } catch (redemptionError) {
+        return NextResponse.json({
+          success: false,
+          error: redemptionError instanceof Error ? redemptionError.message : 'Failed to redeem token',
+          code: 'TOKEN_REDEMPTION_FAILED'
+        }, { status: 400 })
       }
-    } else {
-      // In development, just track the download without deducting tokens
-      await tokenService.trackDownload({
-        routeId: 'generated',
-        userId: user?.id,
-        anonymousId: anonymousId,
-        format: format === 'both' ? 'GPX' : (format === 'gpx' ? 'GPX' : 'TCX'),
-        ipAddress: clientIP,
-        userAgent: request.headers.get('user-agent') || undefined
-      });
     }
 
     // Log file generation (for analytics)

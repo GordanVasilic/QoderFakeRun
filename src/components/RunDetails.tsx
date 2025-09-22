@@ -5,6 +5,8 @@ import { apiClient, handleApiResponse } from '@/lib/apiClient'
 import { downloadFile } from '@/utils/fileGeneration'
 import { useToast } from '@/hooks/useToast'
 import Toast from '@/components/Toast'
+import TokenRedemption from '@/components/TokenRedemption'
+import { TokenBalance } from '@/components/TokenBalance'
 import type { RouteData, PaceHeartRateSettings } from '@/types'
 
 interface RunDetailsProps {
@@ -54,6 +56,7 @@ export default function RunDetails({
   const [description, setDescription] = useState(initialDescription)
   const [fileFormat, setFileFormat] = useState<'gpx' | 'tcx' | 'both'>('gpx')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [showTokenModal, setShowTokenModal] = useState(false)
   
   const { toast, showSuccess, showError, hideToast } = useToast()
 
@@ -272,55 +275,23 @@ export default function RunDetails({
           <h4 className="text-base font-semibold text-gray-900 mb-4">Actions</h4>
           
           <div className="grid gap-3">
-            {/* Download Section */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 hover:shadow-md transition-all duration-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-blue-900">
-                      {fileFormat === 'gpx' && 'GPX File'}
-                      {fileFormat === 'tcx' && 'TCX File'}
-                      {fileFormat === 'both' && 'GPX + TCX Files'}
-                    </div>
-                    <div className="text-xs text-blue-700">
-                      {fileFormat === 'both' ? 'Multiple files ready' : 'Single file download'}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleDownload}
-                  disabled={routeData.points.length < 2 || isGenerating}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer shadow-sm ${
-                    routeData.points.length >= 2 && !isGenerating
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-105'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  {isGenerating ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Generating...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      <span>Download</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-            </div>
+            {/* Token Redemption Section */}
+            <TokenRedemption
+              cost={1}
+              action="download route files"
+              onRedeem={handleDownload}
+              disabled={routeData.points.length < 2 || isGenerating}
+              isProcessing={isGenerating}
+              processingText="Generating..."
+              className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200"
+              onShowTokenModal={() => setShowTokenModal(true)}
+            />
+            
+
             
             {/* Save Route Section */}
             {onSaveRoute && (
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 hover:shadow-md transition-all duration-200">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 hover:shadow-md transition-all duration-200 hidden">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -333,7 +304,7 @@ export default function RunDetails({
                         Save Route
                       </div>
                       <div className="text-xs text-green-700">
-                        {isAuthenticated ? 'Add to your collection' : 'Please log in to save routes'}
+                        {isAuthenticated ? 'Add to your collection' : 'Feature not available'}
                       </div>
                     </div>
                   </div>
@@ -357,13 +328,13 @@ export default function RunDetails({
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <span>{!isAuthenticated ? 'Login Required' : 'Save Route'}</span>
+                        <span>{!isAuthenticated ? 'Not Available' : 'Save Route'}</span>
                       </div>
                     )}
                   </button>
                 </div>
                 {!isAuthenticated && (
-                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg" style={{display: 'none'}}>
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -396,6 +367,26 @@ export default function RunDetails({
         type={toast.type}
         onClose={hideToast}
       />
+      
+      {/* Token Purchase Modal */}
+      {showTokenModal && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full">
+            <TokenBalance 
+              showPurchaseButton={true}
+              className="p-4"
+            />
+            <div className="p-4 border-t">
+              <button
+                onClick={() => setShowTokenModal(false)}
+                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

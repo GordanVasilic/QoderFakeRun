@@ -549,38 +549,51 @@ export default function MapComponent({
       return
     }
 
-    try {
-      console.log('🗺️ Initializing Mapbox GL map...')
-      
-      // Initialize map with software rendering for maximum compatibility
-      console.log('🎨 Initializing map with software rendering (WebGL disabled)...')
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [17.26, 45.14], // Gradiška, Bosnia and Herzegovina as default
-        zoom: 12,
-        attributionControl: false,
-        // Force software rendering - no WebGL
-        failIfMajorPerformanceCaveat: false, // Always use software fallback
-        preserveDrawingBuffer: true, // Required for software rendering
-        antialias: false, // Disable for better software performance
-        renderWorldCopies: false, // Reduce complexity
-        // Enhanced transform request to handle network issues
-        transformRequest: (url: string, resourceType: string | undefined) => {
-          console.log(`🔗 Loading ${resourceType}: ${url}`)
-          // Add headers to prevent caching issues that might cause ERR_ABORTED
-          return {
-            url: url,
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0'
-            },
-            credentials: 'same-origin'
-          }
-        },
-        accessToken: mapboxToken // Explicitly set token
-      })
+    // Function to initialize map with given center coordinates
+    const initializeMap = (center: [number, number]) => {
+      try {
+        console.log('🗺️ Initializing Mapbox GL map with center:', center)
+        
+        // Initialize map with software rendering for maximum compatibility
+        console.log('🎨 Initializing map with software rendering (WebGL disabled)...')
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: center,
+          zoom: 12,
+          attributionControl: false,
+          // Force software rendering - no WebGL
+          failIfMajorPerformanceCaveat: false, // Always use software fallback
+          preserveDrawingBuffer: true, // Required for software rendering
+          antialias: false, // Disable for better software performance
+          renderWorldCopies: false, // Reduce complexity
+          // Enhanced transform request to handle network issues
+          transformRequest: (url: string, resourceType: string | undefined) => {
+            console.log(`🔗 Loading ${resourceType}: ${url}`)
+            // Add headers to prevent caching issues that might cause ERR_ABORTED
+            return {
+              url: url,
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              },
+              credentials: 'same-origin'
+            }
+          },
+          accessToken: mapboxToken // Explicitly set token
+        })
+        
+        setupMapAfterCreation()
+      } catch (error) {
+        console.error('❌ Failed to initialize map:', error)
+        handleMapInitializationError(error)
+      }
+    }
+
+    // Function to handle map setup after creation
+    const setupMapAfterCreation = () => {
+      if (!map.current) return
       
       // Software rendering mode - no WebGL health monitoring needed
       console.log('📊 Software rendering is stable and doesn\'t require health monitoring')
@@ -626,103 +639,109 @@ export default function MapComponent({
       
       // Software rendering mode - no WebGL context to manage
       console.log('🎨 Software rendering initialized - no WebGL context management needed')
-    } catch (error) {
+
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
+      // Add geolocate control for manual location access
+      if ('geolocation' in navigator) {
+        const geolocateControl = new mapboxgl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true
+          },
+          trackUserLocation: true,
+          showUserHeading: true
+        })
+        
+        // Handle geolocation success and errors
+        geolocateControl.on('geolocate', (e) => {
+          console.log('✅ User location found via control:', e.coords.latitude, e.coords.longitude)
+        })
+        
+        geolocateControl.on('error', (error) => {
+          console.warn('⚠️ Geolocation control error:', error.message)
+        })
+        
+        map.current.addControl(geolocateControl, 'top-right')
+      }
+
+      // Set up map load event
+      map.current.on('load', () => {
+        setIsLoaded(true)
+        initializeMapSources()
+      })
+    }
+
+    // Function to handle map initialization errors
+    const handleMapInitializationError = (error: any) => {
       console.error('❌ Failed to initialize Mapbox map:', error)
-      console.error('🛠️ Try refreshing the page or check browser compatibility')
-      setRenderingError(`Failed to initialize map: ${error instanceof Error ? error.message : 'Unknown error'}. Please refresh the page or try a different browser.`)
+      
+      // Check for specific CSP/Worker errors
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      const isCSPWorkerError = errorMessage.includes('Worker') && 
+                              (errorMessage.includes('Content Security Policy') || 
+                               errorMessage.includes('SecurityError') ||
+                               errorMessage.includes('blob:'))
+      
+      let userMessage = 'Failed to initialize map. Please refresh the page or try a different browser.'
+      
+      if (isCSPWorkerError) {
+        console.error('🔒 CSP Worker error detected - this should be resolved by updated security headers')
+        userMessage = 'Map initialization blocked by security policy. The page will automatically retry. If the issue persists, please refresh the page.'
+        
+        // Attempt to retry after a short delay for CSP errors
+        setTimeout(() => {
+          console.log('🔄 Retrying map initialization after CSP error...')
+          window.location.reload()
+        }, 3000)
+      } else {
+        console.error('🛠️ Try refreshing the page or check browser compatibility')
+      }
+      
+      setRenderingError(`${userMessage} Error: ${errorMessage}`)
       setIsLoaded(false)
-      return
     }
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right')
-
-    // Add geolocate control and try to center on user location
-    if ('geolocation' in navigator) {
-      const geolocateControl = new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true
+    // Try to get user location first, then initialize map
+    const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost'
+    
+    if (navigator.geolocation && isSecureContext) {
+      console.log('🔍 Getting user location before map initialization...')
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords
+          console.log('✅ User location found, initializing map at:', latitude, longitude)
+          initializeMap([longitude, latitude])
         },
-        trackUserLocation: true,
-        showUserHeading: true
-      })
-      
-      // Handle geolocation success and errors
-      geolocateControl.on('geolocate', (e) => {
-        console.log('✅ User location found:', e.coords.latitude, e.coords.longitude)
-      })
-      
-      geolocateControl.on('error', (error) => {
-        console.warn('⚠️ Geolocation error:', error.message)
-        console.warn('📍 Using default location (Gradiška, Bosnia and Herzegovina)')
-      })
-      
-      map.current.addControl(geolocateControl, 'top-right')
-      
-      // Automatically try to get user location when map loads
-      map.current.on('load', () => {
-        setIsLoaded(true)
-        initializeMapSources()
-        
-        // Check if geolocation is available and if we're on a secure origin
-        const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost'
-        
-        if (navigator.geolocation && isSecureContext) {
-          console.log('🔍 Attempting to get user location...')
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords
-              console.log('✅ User location found:', latitude, longitude)
-              
-              if (map.current) {
-                console.log('🎯 Centering map on user location')
-                map.current.flyTo({
-                  center: [longitude, latitude],
-                  zoom: 14,
-                  speed: 1.5,
-                  curve: 1.2,
-                  easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
-                })
-              }
-            },
-            (error) => {
-              console.warn('⚠️ Could not get user location:', error.message)
-              console.warn('📍 Error code:', error.code)
-              if (error.code === 1) {
-                console.warn('🔒 Location access denied by user')
-              } else if (error.code === 2) {
-                console.warn('📶 Location unavailable')
-              } else if (error.code === 3) {
-                console.warn('⏱️ Location request timed out')
-              }
-              console.warn('🏔️ Using default location (Gradiška, Bosnia and Herzegovina)')
-            },
-            {
-              enableHighAccuracy: true,
-              timeout: 15000,
-              maximumAge: 60000
-            }
-          )
-        } else {
-          if (!navigator.geolocation) {
-            console.warn('⚠️ Geolocation not supported by this browser')
-          } else {
-            console.warn('🔒 Geolocation requires HTTPS or localhost')
-            console.warn('💡 Tip: Access via https://localhost:3000 or deploy to HTTPS for location features')
+        (error) => {
+          console.warn('⚠️ Could not get user location:', error.message)
+          console.warn('📍 Error code:', error.code)
+          if (error.code === 1) {
+            console.warn('🔒 Location access denied by user')
+          } else if (error.code === 2) {
+            console.warn('📶 Location unavailable')
+          } else if (error.code === 3) {
+            console.warn('⏱️ Location request timed out')
           }
-          console.warn('🏔️ Using default location (Gradiška, Bosnia and Herzegovina)')
+          console.warn('🗼 Using fallback location (Paris, France)')
+          initializeMap([2.3522, 48.8566]) // Paris coordinates as fallback
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000, // Shorter timeout for initial load
+          maximumAge: 60000
         }
-      })
+      )
     } else {
-      console.warn('⚠️ Geolocation is not supported by this browser')
-      console.warn('🏔️ Using default location (Gradiška, Bosnia and Herzegovina)')
-      
-      map.current.on('load', () => {
-        setIsLoaded(true)
-        initializeMapSources()
-      })
+      if (!navigator.geolocation) {
+        console.warn('⚠️ Geolocation not supported by this browser')
+      } else {
+        console.warn('🔒 Geolocation requires HTTPS or localhost')
+        console.warn('💡 Tip: Access via https://localhost:3000 or deploy to HTTPS for location features')
+      }
+      console.warn('🗼 Using fallback location (Paris, France)')
+      initializeMap([2.3522, 48.8566]) // Paris coordinates as fallback
     }
-
     return () => {
       // Software rendering cleanup - much simpler than WebGL
       eventHandlersSetupRef.current = false // Reset event handlers flag

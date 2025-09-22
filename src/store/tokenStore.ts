@@ -29,7 +29,7 @@ export interface TokenState {
   fetchPackages: () => Promise<TokenPackage[]>;
   selectPackage: (packageId: string) => void;
   purchaseTokens: (successUrl: string, cancelUrl: string) => Promise<string | null>;
-  checkPaymentStatus: (paymentId: string) => Promise<'PENDING' | 'COMPLETED' | 'FAILED' | 'ERROR'>;
+  checkPaymentStatus: (paymentId: string) => Promise<{ success: boolean; data?: any; error?: string; }>;
   resetState: () => void;
 }
 
@@ -170,19 +170,36 @@ export const useTokenStore = create<TokenState>()(
           const result = await response.json();
           
           if (!result.success) {
-            return 'ERROR';
+            return { success: false, error: result.error || 'Payment status check failed' };
           }
           
           // If payment completed, update token balance
           if (result.data.status === 'COMPLETED') {
             // Update token balance in auth store
             await useAuthStore.getState().updateTokenBalance();
+            
+            // Return success with tokens added info
+            const tokensAdded = get().lastPurchasedTokens || 0;
+            return { 
+              success: true, 
+              data: { 
+                status: result.data.status,
+                tokensAdded,
+                payment: result.data.payment
+              }
+            };
           }
           
-          return result.data.status;
+          return { 
+            success: true, 
+            data: { 
+              status: result.data.status,
+              payment: result.data.payment
+            }
+          };
         } catch (error) {
           console.error('Error checking payment status:', error);
-          return 'ERROR';
+          return { success: false, error: 'Failed to check payment status' };
         }
       },
       

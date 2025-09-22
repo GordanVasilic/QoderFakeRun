@@ -34,6 +34,35 @@ const mockStripe = {
     }
   },
   
+  paymentIntents: {
+    create: async (params: any) => {
+      const paymentIntentId = `pi_test_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Log the request for debugging
+      console.log('Creating Stripe payment intent:', params);
+      
+      // In a real implementation, Stripe would return a proper response
+      return {
+        id: paymentIntentId,
+        client_secret: `${paymentIntentId}_secret_${Math.random().toString(36).substring(2, 15)}`,
+        amount: params.amount,
+        currency: params.currency,
+        status: 'requires_payment_method'
+      };
+    },
+    
+    confirm: async (paymentIntentId: string, params: any) => {
+      console.log('Confirming payment intent:', paymentIntentId, params);
+      
+      // Mock successful confirmation
+      return {
+        id: paymentIntentId,
+        status: 'succeeded',
+        amount_received: params.amount || 0
+      };
+    }
+  },
+  
   webhooks: {
     constructEvent: (body: string, signature: string, secret: string) => {
       // In a real implementation, this would verify the signature
@@ -58,6 +87,68 @@ const mockStripe = {
 const stripe = mockStripe;
 
 export const stripeService = {
+  // Create a payment intent for token purchase
+  async createPaymentIntent({
+    packageId,
+    userId,
+    anonymousId
+  }: {
+    packageId: string;
+    userId?: string;
+    anonymousId?: string;
+  }) {
+    try {
+      // Get the token package
+      const tokenPackage = tokenService.getTokenPackageById(packageId);
+      
+      if (!tokenPackage) {
+        return { error: 'Invalid token package' };
+      }
+      
+      // Either userId or anonymousId must be provided
+      if (!userId && !anonymousId) {
+        return { error: 'Either userId or anonymousId must be provided' };
+      }
+      
+      // Store the payment intent in the database
+      const paymentTransaction = await prisma.paymentTransaction.create({
+        data: {
+          userId,
+          anonymousId,
+          amount: tokenPackage.price,
+          currency: CURRENCY,
+          status: 'PENDING',
+          tokensPurchased: tokenPackage.tokens
+        }
+      });
+      
+      // Create a payment intent with Stripe
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(tokenPackage.price * 100), // Convert to cents
+        currency: CURRENCY,
+        metadata: {
+          paymentId: paymentTransaction.id,
+          packageId: packageId,
+          userId: userId || '',
+          anonymousId: anonymousId || '',
+          tokenCount: tokenPackage.tokens.toString()
+        }
+      });
+      
+      return {
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        paymentId: paymentTransaction.id,
+        amount: tokenPackage.price,
+        packageName: tokenPackage.name,
+        tokens: tokenPackage.tokens
+      };
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      return { error: 'Failed to create payment intent' };
+    }
+  },
+
   // Create a checkout session for token purchase
   async createCheckoutSession({
     packageId,

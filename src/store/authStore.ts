@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { tokenService } from '@/lib/tokens';
+import { tokenService } from '@/utils/tokenService';
+import { networkMonitor } from '@/utils/networkMonitor';
 
 // Define the store state type
 export interface AuthState {
@@ -149,6 +150,21 @@ export const useAuthStore = create<AuthState>()(
             
             if (!token) {
               set({ isAuthenticated: false, user: null });
+              // Ensure we have an anonymous ID for non-authenticated users
+              ensureAnonymousId();
+              
+              // Log the current persisted balance before updating
+              const currentAnonymousBalance = get().anonymousTokenBalance;
+              console.log('🔍 [authStore] checkAuth - current anonymous balance before server sync:', currentAnonymousBalance);
+              
+              // Update token balance for anonymous users - but don't fail checkAuth if it fails
+              try {
+                const serverBalance = await get().updateTokenBalance();
+                console.log('🔍 [authStore] checkAuth - server returned balance:', serverBalance);
+                console.log('🔍 [authStore] checkAuth - balance after server sync:', get().anonymousTokenBalance);
+              } catch (balanceError) {
+                console.warn('Failed to update token balance during checkAuth, but continuing:', balanceError);
+              }
               return false;
             }
             
@@ -178,41 +194,154 @@ export const useAuthStore = create<AuthState>()(
         },
         
         updateTokenBalance: async () => {
-          try {
-            // For authenticated users, get from API
-            if (get().isAuthenticated) {
-              const token = get().token;
+          console.log('🔄 [authStore] updateTokenBalance called');
+          const { user, anonymousId } = get();
+          
+          // Clear any cached balance first to prevent showing stale data
+          if (user) {
+            set({ tokenBalance: 0 });
+          } else {
+            set({ anonymousTokenBalance: 0 });
+          }
+          
+          // Retry logic with exponential backoff and better error handling
+          const fetchWithRetry = async (url: string, maxRetries = 3) => {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+              try {
+                console.log(`🔄 [authStore] Attempt ${attempt}/${maxRetries} for ${url}`);
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                  console.warn(`⏰ [authStore] Request timeout after 10s on attempt ${attempt}`);
+                  controller.abort();
+                }, 10000); // 10 second timeout
+                
+                const response = await fetch(url, {
+                  signal: controller.signal,
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  cache: 'no-cache'
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                  console.log(`✅ [authStore] Success on attempt ${attempt}`);
+                  return response;
+                } else {
+                  const errorBody = await response.text();
+                  console.warn(`⚠️ [authStore] Attempt ${attempt} failed with status ${response.status}:`, errorBody);
+                  
+                  // Don't retry on client errors (4xx), only on server errors (5xx) and network issues
+                  if (response.status >= 400 && response.status < 500 && attempt === maxRetries) {
+                    throw new Error(`Client error ${response.status}: ${errorBody}`);
+                  }
+                  
+                  if (attempt === maxRetries) {
+                    throw new Error(`Server error ${response.status}: Failed to fetch wallet balance after ${maxRetries} attempts`);
+                  }
+                }
+              } catch (error: any) {
+                const isAbortError = error.name === 'AbortError';
+                const isNetworkError = error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch');
+                
+                console.warn(`⚠️ [authStore] Attempt ${attempt} failed:`, {
+                  message: error.message,
+                  name: error.name,
+                  isAbortError,
+                  isNetworkError
+                });
+                
+                if (attempt === maxRetries) {
+                  if (isAbortError) {
+                    throw new Error('Request timeout: Server took too long to respond');
+                  } else if (isNetworkError) {
+                    throw new Error('Network error: Unable to connect to server');
+                  } else {
+                    throw error;
+                  }
+                }
+                
+                // Exponential backoff: wait 1s, 2s, 4s
+                const delay = Math.pow(2, attempt - 1) * 1000;
+                console.log(`⏳ [authStore] Waiting ${delay}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+              }
+            }
+            throw new Error('Max retries exceeded');
+          };
+          
+          if (user) {
+            console.log('👤 [authStore] User authenticated, fetching user wallet');
+            try {
+              const response = await fetchWithRetry('/api/tokens/wallet');
+              const data = await response.json();
+              console.log('✅ [authStore] User wallet data received:', data);
+              set({ tokenBalance: data.balance });
+              return data.balance;
+            } catch (error) {
+              console.error('💥 [authStore] User wallet fetch error:', error);
+              throw error;
+            }
+          } else {
+            console.log('👻 [authStore] Anonymous user, fetching anonymous wallet');
+            
+            // Ensure we have an anonymous ID
+            let currentAnonymousId = anonymousId;
+            if (!currentAnonymousId) {
+              console.log('🔧 [authStore] No anonymousId found, generating new one...');
+              currentAnonymousId = ensureAnonymousId();
+            }
+            
+            if (!currentAnonymousId) {
+              console.error('❌ [authStore] Failed to generate anonymousId for anonymous user');
+              throw new Error('Anonymous ID not available');
+            }
+            
+            try {
+              const url = `/api/tokens/wallet?anonymousId=${currentAnonymousId}`;
+              console.log(`📡 [authStore] Anonymous wallet API request to: ${url}`);
               
-              if (!token) return get().tokenBalance;
+              // Check network status first
+              const networkInfo = networkMonitor.getNetworkInfo();
+              console.log('🌐 [authStore] Network info:', networkInfo);
               
-              const response = await fetch('/api/tokens', {
-                headers: { 'Authorization': `Bearer ${token}` }
+              if (!networkMonitor.getNetworkStatus()) {
+                console.warn('⚠️ [authStore] Network offline, using fallback balance of 0');
+                set({ anonymousTokenBalance: 0 });
+                return 0;
+              }
+              
+              // Test basic connectivity
+              const isConnected = await networkMonitor.testConnectivity();
+              if (!isConnected) {
+                console.warn('⚠️ [authStore] Health check failed, using fallback balance of 0');
+                set({ anonymousTokenBalance: 0 });
+                return 0;
+              }
+              
+              // Try the wallet API directly without URL variants
+              console.log(`🔄 [authStore] Calling wallet API: ${url}`);
+              const response = await fetchWithRetry(url);
+              const data = await response.json();
+              console.log('✅ [authStore] Anonymous wallet data received:', data);
+              set({ anonymousTokenBalance: data.balance });
+              return data.balance;
+            } catch (error) {
+              console.error('💥 [authStore] Anonymous wallet fetch error:', {
+                error: error instanceof Error ? error.message : String(error),
+                anonymousId: currentAnonymousId,
+                timestamp: new Date().toISOString(),
+                userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
+                networkInfo: networkMonitor.getNetworkInfo()
               });
               
-              const result = await response.json();
-              
-              if (!result.success) return get().tokenBalance;
-              
-              set({ tokenBalance: result.data.userTokens || 0 });
-              return result.data.userTokens || 0;
+              // Set a fallback balance to prevent UI issues
+              console.warn('⚠️ [authStore] Using fallback balance of 0 due to error');
+              set({ anonymousTokenBalance: 0 });
+              return 0;
             }
-            
-            // For anonymous users
-            const anonymousId = get().anonymousId;
-            if (anonymousId) {
-              const response = await fetch(`/api/tokens?anonymousId=${anonymousId}`);
-              const result = await response.json();
-              
-              if (!result.success) return get().anonymousTokenBalance;
-              
-              set({ anonymousTokenBalance: result.data.anonymousTokens || 0 });
-              return result.data.anonymousTokens || 0;
-            }
-            
-            return 0;
-          } catch (error) {
-            console.error('Error updating token balance:', error);
-            return get().isAuthenticated ? get().tokenBalance : get().anonymousTokenBalance;
           }
         }
       }),
@@ -223,7 +352,8 @@ export const useAuthStore = create<AuthState>()(
           anonymousId: state.anonymousId,
           isAuthenticated: state.isAuthenticated,
           user: state.user,
-          tokenBalance: state.tokenBalance
+          tokenBalance: state.tokenBalance,
+          anonymousTokenBalance: state.anonymousTokenBalance
         })
       }
     ),
@@ -237,11 +367,15 @@ export const useAuthStore = create<AuthState>()(
 export function ensureAnonymousId() {
   const { anonymousId, isAuthenticated } = useAuthStore.getState();
   
+  console.log('ensureAnonymousId called - isAuthenticated:', isAuthenticated, 'existing anonymousId:', anonymousId);
+  
   if (isAuthenticated || anonymousId) {
+    console.log('Returning existing anonymousId:', anonymousId);
     return anonymousId;
   }
   
   const newAnonymousId = tokenService.generateAnonymousId();
+  console.log('Generated new anonymousId:', newAnonymousId);
   useAuthStore.setState({ anonymousId: newAnonymousId });
   
   return newAnonymousId;

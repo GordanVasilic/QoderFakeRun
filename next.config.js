@@ -1,5 +1,8 @@
 const nextConfig = {
     /** @type {import('next').NextConfig} */
+  // Fix workspace root detection
+  outputFileTracingRoot: __dirname,
+  
   // Security headers
   async headers() {
     return [
@@ -8,7 +11,7 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-Content-Type-Options',
@@ -29,6 +32,10 @@ const nextConfig = {
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains; preload',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.stripe.com https://va.vercel-scripts.com https://api.mapbox.com; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://*.stripe.com https://checkout.stripe.com https://m.stripe.com https://m.stripe.network; frame-ancestors 'self' https://js.stripe.com https://*.stripe.com; connect-src 'self' https://api.stripe.com https://*.stripe.com https://maps.googleapis.com https://vitals.vercel-insights.com https://api.mapbox.com https://events.mapbox.com https://checkout.stripe.com https://m.stripe.com https://m.stripe.network; style-src 'self' 'unsafe-inline' https://api.mapbox.com https://js.stripe.com https://*.stripe.com; img-src 'self' data: https: https://api.mapbox.com https://js.stripe.com https://*.stripe.com; font-src 'self' data: https://api.mapbox.com https://js.stripe.com https://*.stripe.com; worker-src 'self' blob: https://js.stripe.com https://*.stripe.com; child-src 'self' https://js.stripe.com https://*.stripe.com https://checkout.stripe.com https://m.stripe.com https://m.stripe.network; object-src 'none';",
           },
         ],
       },

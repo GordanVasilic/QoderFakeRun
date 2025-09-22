@@ -4,6 +4,7 @@ import './globals.css'
 import NavBar from '@/components/NavBar'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Suspense } from 'react'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -37,8 +38,12 @@ export default function RootLayout({
             {children}
           </main>
         </div>
-        <Analytics />
-        <SpeedInsights />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SpeedInsights />
+        </Suspense>
       </body>
     </html>
   )

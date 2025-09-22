@@ -4,9 +4,6 @@ import { isAuthenticated } from '@/lib/auth';
 import { generalLimiter, getClientIP } from '@/lib/rateLimit';
 import { z } from 'zod';
 
-// Use singleton Prisma client
-const prisma = db;
-
 // Validation schema
 const ProfileUpdateSchema = z.object({
   firstName: z.string().optional(),
@@ -38,7 +35,7 @@ export async function PATCH(request: NextRequest) {
     const validatedData = ProfileUpdateSchema.parse(body);
     
     // Update user
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await db.user.update({
       where: { id: user.id },
       data: validatedData,
       select: {

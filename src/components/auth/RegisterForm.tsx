@@ -18,7 +18,7 @@ export default function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  const returnUrl = searchParams.get('returnUrl') || '/'
+  const returnUrl = searchParams?.get('returnUrl') || '/'
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -208,7 +208,7 @@ export default function RegisterForm() {
           )}
         </button>
         
-        <div className="text-center mt-4">
+        <div className="text-center mt-4" style={{display: 'none'}}>
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
             <a href="/login" className="text-blue-600 hover:text-blue-500">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuthStore } from '@/store/authStore'
 import { usePathname } from 'next/navigation'
+import TokenBalance from './TokenBalance'
 
 export default function NavBar() {
   const { isAuthenticated, user, logout, checkAuth } = useAuthStore()
@@ -13,8 +14,8 @@ export default function NavBar() {
   
   // Initialize authentication state on component mount
   useEffect(() => {
-    checkAuth()
-  }, [checkAuth])
+    checkAuth();
+  }, [checkAuth]);
   
   // Close dropdowns when clicking elsewhere
   useEffect(() => {
@@ -89,16 +90,7 @@ export default function NavBar() {
                   Saved Routes
                 </Link>
               )}
-              <Link
-                href="/tokens"
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                  pathname === '/tokens' 
-                    ? 'border-blue-500 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Buy Tokens
-              </Link>
+
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -109,9 +101,9 @@ export default function NavBar() {
                     onClick={toggleProfile}
                     className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 items-center"
                   >
-                    <span className="mr-2 text-sm text-gray-700">
-                      {user?.tokenBalance} <span className="text-gray-500">tokens</span>
-                    </span>
+                    <div className="mr-2">
+                      <TokenBalance size="sm" />
+                    </div>
                     <span className="sr-only">Open user menu</span>
                     <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
                       {user?.firstName ? user.firstName[0] : (user?.username ? user.username[0] : user?.email[0])}
@@ -142,7 +134,10 @@ export default function NavBar() {
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsProfileOpen(false)}
                     >
-                      Tokens: {user?.tokenBalance}
+                      <div className="flex items-center space-x-2">
+                        <span>Tokens:</span>
+                        <TokenBalance size="sm" showLabel={false} />
+                      </div>
                     </Link>
                     {user?.role === 'ADMIN' && (
                       <Link
@@ -164,19 +159,24 @@ export default function NavBar() {
                 )}
               </div>
             ) : (
-              <div className="flex space-x-2">
-                <Link
-                  href="/login"
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  Register
-                </Link>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <TokenBalance size="sm" />
+                </div>
+                <div className="flex space-x-2" style={{display: 'none'}}>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Register
+                  </Link>
+                </div>
               </div>
             )}
           </div>
@@ -227,17 +227,7 @@ export default function NavBar() {
               Saved Routes
             </Link>
           )}
-          <Link
-            href="/tokens"
-            className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-              pathname === '/tokens' 
-                ? 'border-blue-500 text-blue-700 bg-blue-50'
-                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
-            }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Buy Tokens
-          </Link>
+
         </div>
         <div className="pt-4 pb-3 border-t border-gray-200">
           {isAuthenticated ? (
@@ -272,7 +262,10 @@ export default function NavBar() {
                   className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Tokens: {user?.tokenBalance}
+                  <div className="flex items-center space-x-2">
+                    <span>Tokens:</span>
+                    <TokenBalance size="md" showLabel={false} />
+                  </div>
                 </Link>
                 {user?.role === 'ADMIN' && (
                   <Link
@@ -293,21 +286,29 @@ export default function NavBar() {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-around mt-3 space-y-1 px-2">
-              <Link
-                href="/login"
-                className="flex-1 mx-2 py-2 text-center border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Log in
-              </Link>
-              <Link
-                href="/register"
-                className="flex-1 mx-2 py-2 text-center border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Register
-              </Link>
+            <div className="mt-3 space-y-1">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-900">Your Balance:</span>
+                  <TokenBalance size="sm" />
+                </div>
+              </div>
+              <div className="flex items-center justify-around mt-3 space-y-1 px-2" style={{display: 'none'}}>
+                <Link
+                  href="/login"
+                  className="flex-1 mx-2 py-2 text-center border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  className="flex-1 mx-2 py-2 text-center border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Register
+                </Link>
+              </div>
             </div>
           )}
         </div>
