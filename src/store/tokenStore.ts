@@ -107,7 +107,7 @@ export const useTokenStore = create<TokenState>()(
             cancelUrl
           };
           
-          let headers: any = { 'Content-Type': 'application/json' };
+          const headers: any = { 'Content-Type': 'application/json' };
           
           // Use authentication if available
           if (authState.isAuthenticated && authState.token) {

@@ -144,7 +144,7 @@ export default function CombinedRouteChart({
             
             let value = entry.value
             let unit = ''
-            let color = entry.color
+            const color = entry.color
 
             switch (entry.dataKey) {
               case 'elevation':

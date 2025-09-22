@@ -200,7 +200,7 @@ function calculateElevationGain(elevationPoints: Array<{ elevation: number }>): 
   let totalGain = 0
   let minElevation = Infinity
   let maxElevation = -Infinity
-  let elevationChanges: Array<{ from: number; to: number; change: number; isUphill: boolean }> = []
+  const elevationChanges: Array<{ from: number; to: number; change: number; isUphill: boolean }> = []
   
   console.log('📊 Calculating elevation gain from Mapbox elevation data:')
   console.log('🔍 Detailed elevation analysis:')
