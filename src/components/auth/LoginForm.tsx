@@ -132,7 +132,7 @@ export default function LoginForm() {
         
         <div className="text-center mt-4" style={{display: 'none'}}>
           <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="/register" className="text-blue-600 hover:text-blue-500">
               Create Account
             </a>

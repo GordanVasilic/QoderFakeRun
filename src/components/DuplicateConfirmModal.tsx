@@ -54,7 +54,7 @@ export default function DuplicateConfirmModal({
         {/* Content */}
         <div className="px-6 py-4">
           <p className="text-gray-600 mb-2">
-            A route with the name <span className="font-medium text-gray-900">"{routeName}"</span> already exists.
+            A route with the name <span className="font-medium text-gray-900">&quot;{routeName}&quot;</span> already exists.
           </p>
           <p className="text-gray-600">
             Do you want to overwrite the existing route?

@@ -516,9 +516,9 @@ export default function MapComponent({
         console.log('✅ WebGL is fully supported and functional')
         return { supported: true, diagnostics }
         
-      } catch (error) {
-        diagnostics.failureReason = `WebGL check exception: ${error}`
-        console.error('❌ WebGL check failed:', error)
+      } catch (_error) {
+        diagnostics.failureReason = `WebGL check exception: ${_error}`
+        console.error('❌ WebGL check failed:', _error)
         return { supported: false, diagnostics }
       }
     }
