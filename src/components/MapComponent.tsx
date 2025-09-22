@@ -554,6 +554,12 @@ export default function MapComponent({
       try {
         console.log('🗺️ Initializing Mapbox GL map with center:', center)
         
+        // Check if container is available
+        if (!mapContainer.current) {
+          console.error('❌ Map container not available')
+          return
+        }
+        
         // Initialize map with software rendering for maximum compatibility
         console.log('🎨 Initializing map with software rendering (WebGL disabled)...')
         map.current = new mapboxgl.Map({

@@ -232,7 +232,7 @@ export const TokenRedemption: React.FC<TokenRedemptionProps> = ({
   }
 
   // Show error state with retry button
-  if (loadError && !wallet) {
+  if (loadError && currentBalance === null) {
     return (
       <div className={`bg-white border border-red-200 rounded-lg p-4 ${className}`}>
         <div className="flex items-center justify-center space-y-3 flex-col">

@@ -53,10 +53,9 @@ export class BrowserIDManager {
     }
 
     // Fallback for SSR
-    if (!this.browserId) {
-      this.browserId = uuidv4();
-    }
-    return this.browserId;
+    const newId = uuidv4();
+    this.browserId = newId;
+    return newId;
   }
 
   /**
