@@ -32,7 +32,7 @@ export default function DataVisualization({ routeData }: DataVisualizationProps)
       data.push({
         distance: Number(cumulativeDistance.toFixed(2)),
         pace: routeData.averagePace + (Math.random() - 0.5) * 0.5, // Add some variation
-        elevation: routeData.points[i].elevation || Math.random() * 100, // Mock elevation
+        elevation: routeData.points[i].elevation || 0, // Use actual elevation data
         heartRate: 140 + Math.random() * 40, // Mock heart rate data
       })
     }
@@ -41,11 +41,18 @@ export default function DataVisualization({ routeData }: DataVisualizationProps)
   }, [routeData])
 
   const maxElevation = Math.max(...chartData.map(d => d.elevation || 0))
-  const totalElevationGain = chartData.reduce((total, point, index) => {
-    if (index === 0) return 0
-    const elevationDiff = (point.elevation || 0) - (chartData[index - 1].elevation || 0)
-    return total + (elevationDiff > 0 ? elevationDiff : 0)
-  }, 0)
+  const totalElevationGain = useMemo(() => {
+    if (routeData.elevationGain !== undefined) {
+      return routeData.elevationGain; // Use the actual calculated elevation gain from route data
+    }
+    
+    // Fallback calculation from chart data
+    return chartData.reduce((total, point, index) => {
+      if (index === 0) return 0
+      const elevationDiff = (point.elevation || 0) - (chartData[index - 1].elevation || 0)
+      return total + (elevationDiff > 0 ? elevationDiff : 0)
+    }, 0)
+  }, [routeData.elevationGain, chartData])
 
   return (
     <div className="space-y-6">
