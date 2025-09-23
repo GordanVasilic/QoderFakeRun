@@ -126,7 +126,6 @@ export const tokenService = {
       return false;
     }
     
-    let pool: any = null;
     try {
       console.debug('🔍 Adding tokens to anonymous user:', { anonymousId, tokens: tokenCount });
       
@@ -134,55 +133,40 @@ export const tokenService = {
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + ANONYMOUS_TOKEN_EXPIRY_DAYS);
       
-      // Create direct PostgreSQL connection to bypass Prisma
-      pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        max: 1,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 10000, // Increased from 2000 to 10000ms
-        ssl: {
-          rejectUnauthorized: false
-        }
+      // Check if anonymous user already exists
+      const existingRecord = await db.anonymousToken.findUnique({
+        where: { anonymousId }
       });
       
-      const client = await pool.connect();
-      
-      try {
-        // Check if anonymous user already exists using direct query
-        const existingResult = await client.query(
-          'SELECT id, "tokenBalance" FROM anonymous_tokens WHERE "anonymousId" = $1',
-          [anonymousId]
-        );
-        
-        if (existingResult.rows.length > 0) {
-          // Update existing record
-          await client.query(
-            'UPDATE anonymous_tokens SET "tokenBalance" = "tokenBalance" + $1, "expiresAt" = $2, "updatedAt" = NOW() WHERE "anonymousId" = $3',
-            [tokenCount, expiryDate, anonymousId]
-          );
-        } else {
-          // Create new record
-          const id = randomBytes(12).toString('base64url');
-          await client.query(
-            'INSERT INTO anonymous_tokens (id, "anonymousId", "tokenBalance", "expiresAt", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, NOW(), NOW())',
-            [id, anonymousId, tokenCount, expiryDate]
-          );
-        }
-        
-        return true;
-      } catch (queryError) {
-        console.error('Database query error:', queryError);
-        throw queryError;
-      } finally {
-        client.release();
+      if (existingRecord) {
+        // Update existing record
+        await db.anonymousToken.update({
+          where: { anonymousId },
+          data: {
+            tokenBalance: {
+              increment: tokenCount
+            },
+            expiresAt: expiryDate,
+            updatedAt: new Date()
+          }
+        });
+        console.debug('✅ Updated existing anonymous user tokens:', { anonymousId, newBalance: existingRecord.tokenBalance + tokenCount });
+      } else {
+        // Create new record
+        await db.anonymousToken.create({
+          data: {
+            anonymousId,
+            tokenBalance: tokenCount,
+            expiresAt: expiryDate
+          }
+        });
+        console.debug('✅ Created new anonymous user record:', { anonymousId, tokenBalance: tokenCount });
       }
+      
+      return true;
     } catch (error) {
       console.error('Error adding tokens to anonymous user:', error);
       return false;
-    } finally {
-      if (pool) {
-        await pool.end();
-      }
     }
   },
   
