@@ -1,9 +1,10 @@
 import { db } from './prisma';
 import { randomBytes } from 'crypto';
 // Import pg only on server side
-let Pool: typeof import('pg').Pool;
+let Pool: any;
 if (typeof window === 'undefined') {
-  Pool = require('pg').Pool;
+  const { Pool: PgPool } = require('pg');
+  Pool = PgPool;
 }
 
 // Token package type definition
@@ -125,7 +126,7 @@ export const tokenService = {
       return false;
     }
     
-    let pool: import('pg').Pool | null = null;
+    let pool: any = null;
     try {
       console.debug('🔍 Adding tokens to anonymous user:', { anonymousId, tokens: tokenCount });
       
