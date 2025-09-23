@@ -5,7 +5,7 @@ import { tokenService } from './tokens';
 
 // Initialize Stripe with secret key from environment
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { 
-  apiVersion: '2023-10-16' 
+  apiVersion: '2025-08-27.basil' 
 });
 
 // Constants
@@ -181,7 +181,9 @@ export const stripeService = {
               data: {
                 status: 'COMPLETED',
                 completedAt: new Date(),
-                providerTransactionId: session.payment_intent || session.id
+                providerTransactionId: typeof session.payment_intent === 'string' 
+                  ? session.payment_intent 
+                  : session.payment_intent?.id || session.id
               }
             });
             

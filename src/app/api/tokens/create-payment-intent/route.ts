@@ -48,7 +48,16 @@ export async function POST(request: NextRequest) {
         error: result.error
       }, { status: 400 });
     }
-    
+
+    // Check if clientSecret is available
+    if (!result.clientSecret) {
+      console.error('Payment intent created but no client secret returned');
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to create payment intent client secret'
+      }, { status: 500 });
+    }
+
     // Return payment intent details
     const response: {
       success: boolean;

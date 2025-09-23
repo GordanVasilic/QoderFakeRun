@@ -57,7 +57,16 @@ export async function POST(request: NextRequest) {
         error: result.error
       }, { status: 400 });
     }
-    
+
+    // Check if sessionUrl is available
+    if (!result.sessionUrl) {
+      console.error('Checkout session created but no URL returned');
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to create checkout session URL'
+      }, { status: 500 });
+    }
+
     // Return checkout session and anonymousId if applicable
     const response: {
       success: boolean;
