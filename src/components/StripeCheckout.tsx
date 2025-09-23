@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Check, Star, ExternalLink, ArrowLeft, AlertCircle } from 'lucide-react';
+import { CreditCard, Check, Star, ExternalLink, ArrowLeft, AlertCircle, X } from 'lucide-react';
 import { tokenService } from '@/lib/tokens';
 import type { TokenPackage } from '@/lib/tokens';
 
@@ -71,6 +71,70 @@ const COUNTRIES = [
   { code: 'BE', name: 'Belgium' },
 ];
 
+// Card Decline Modal Component
+const CardDeclineModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  errorMessage: string;
+}> = ({ isOpen, onClose, errorMessage }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Payment Declined</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <div className="mb-6">
+          <p className="text-gray-700 mb-3">
+            Your card has been declined. This could be due to:
+          </p>
+          <ul className="text-sm text-gray-600 space-y-1 ml-4">
+            <li>• Insufficient funds</li>
+            <li>• Card security settings</li>
+            <li>• Incorrect card information</li>
+            <li>• Bank security measures</li>
+          </ul>
+          
+          {errorMessage && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700 font-medium">Error Details:</p>
+              <p className="text-sm text-red-600">{errorMessage}</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onClose}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Compact Payment Form Component
 const CompactPaymentForm: React.FC<{
   selectedPackage: TokenPackage;
@@ -83,6 +147,8 @@ const CompactPaymentForm: React.FC<{
   const [zipCode, setZipCode] = useState('');
   const [country, setCountry] = useState('US');
   const [cardError, setCardError] = useState<string | null>(null);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [declineErrorMessage, setDeclineErrorMessage] = useState('');
 
   // Default postal codes for countries that require them
   const getDefaultPostalCode = (countryCode: string): string => {
@@ -179,42 +245,36 @@ const CompactPaymentForm: React.FC<{
       });
 
       if (paymentMethodError) {
-        throw new Error(paymentMethodError.message || 'Failed to create payment method');
+        // Check if it's a card decline error
+        if (isCardDeclineError(paymentMethodError)) {
+          setDeclineErrorMessage(paymentMethodError.message || 'Your card has been declined.');
+          setShowDeclineModal(true);
+        } else {
+          throw new Error(paymentMethodError.message || 'Failed to create payment method');
+        }
+        return;
       }
 
-      // Confirm payment - use mock confirmation in development
-      let paymentConfirmed = false;
-      
-      if (process.env.NODE_ENV === 'development') {
-        // Mock payment confirmation for development
-        console.log('Mock payment confirmation in development mode');
-        
-        // Simulate successful payment
-        const mockConfirmResult = {
-          paymentIntent: {
-            id: paymentIntentData.data.paymentIntentId,
-            status: 'succeeded'
-          }
-        };
-        
-        console.log('Mock payment confirmed:', mockConfirmResult);
-        paymentConfirmed = true;
-      } else {
-        // Real Stripe confirmation for production
-        const { error: confirmError } = await stripe.confirmCardPayment(
-          paymentIntentData.data.clientSecret,
-          {
-            payment_method: paymentMethod.id,
-          }
-        );
+      // Confirm payment with Stripe
+      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
+        paymentIntentData.data.clientSecret,
+        {
+          payment_method: paymentMethod.id,
+        }
+      );
 
-        if (confirmError) {
+      if (confirmError) {
+        // Check if it's a card decline error
+        if (isCardDeclineError(confirmError)) {
+          setDeclineErrorMessage(confirmError.message || 'Your card has been declined.');
+          setShowDeclineModal(true);
+        } else {
           throw new Error(confirmError.message || 'Payment confirmation failed');
         }
-        paymentConfirmed = true;
+        return;
       }
 
-      if (!paymentConfirmed) {
+      if (!paymentIntent || paymentIntent.status !== 'succeeded') {
         throw new Error('Payment confirmation failed');
       }
 
@@ -225,7 +285,7 @@ const CompactPaymentForm: React.FC<{
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          paymentIntentId: paymentIntentData.data.paymentIntentId,
+          paymentIntentId: paymentIntent.id,
           paymentMethodId: paymentMethod.id,
           paymentId: paymentIntentData.data.paymentId,
           anonymousId: !user ? ensureAnonymousId() : undefined,
@@ -249,58 +309,101 @@ const CompactPaymentForm: React.FC<{
       
     } catch (err) {
       console.error('Payment error:', err);
-      toast.error(err instanceof Error ? err.message : 'An error occurred during payment');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during payment';
+      
+      // Check if it's a card decline error in the catch block as well
+      if (err instanceof Error && isCardDeclineError({ message: err.message })) {
+        setDeclineErrorMessage(errorMessage);
+        setShowDeclineModal(true);
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setProcessing(false);
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Payment Details</h3>
-      
-      {elementsError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center gap-2 text-red-700">
-            <AlertCircle className="h-4 w-4" />
-            <span className="text-sm font-medium">{elementsError}</span>
-          </div>
-        </div>
-      )}
+  // Helper function to determine if an error is a card decline
+  const isCardDeclineError = (error: any): boolean => {
+    if (!error || !error.message) return false;
+    
+    const message = error.message.toLowerCase();
+    const declineKeywords = [
+      'card was declined',
+      'your card has been declined',
+      'insufficient funds',
+      'card declined',
+      'declined',
+      'do not honor',
+      'pickup card',
+      'restricted card',
+      'security violation',
+      'lost card',
+      'stolen card',
+      'expired card',
+      'invalid cvc',
+      'processing error',
+      'issuer declined'
+    ];
+    
+    return declineKeywords.some(keyword => message.includes(keyword)) || 
+           error.code === 'card_declined' ||
+           error.decline_code;
+  };
 
-      {/* Payment Form */}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        {/* Credit Card */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Card Information
-          </label>
-          <div className="border border-gray-300 rounded-lg p-3 bg-white">
-            <CardElement
-              options={{
-                style: {
-                  base: {
-                    fontSize: '14px',
-                    color: '#424770',
-                    '::placeholder': {
-                      color: '#aab7c4',
+  return (
+    <>
+      <CardDeclineModal
+        isOpen={showDeclineModal}
+        onClose={() => setShowDeclineModal(false)}
+        errorMessage={declineErrorMessage}
+      />
+      
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">Payment Details</h3>
+        
+        {elementsError && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">{elementsError}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Form */}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Credit Card */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Card Information
+            </label>
+            <div className="border border-gray-300 rounded-lg p-3 bg-white">
+              <CardElement
+                options={{
+                  style: {
+                    base: {
+                      fontSize: '14px',
+                      color: '#424770',
+                      '::placeholder': {
+                        color: '#aab7c4',
+                      },
                     },
                   },
-                },
-                hidePostalCode: true,
-              }}
-              onChange={handleCardChange}
-            />
-          </div>
-          {cardError && (
-            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2 text-red-700">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">{cardError}</span>
-              </div>
+                  hidePostalCode: true,
+                }}
+                onChange={handleCardChange}
+              />
             </div>
-          )}
-        </div>
+            {cardError && (
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2 text-red-700">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm">{cardError}</span>
+                </div>
+              </div>
+            )}
+          </div>
 
         {/* Postal Code - Always visible and required */}
         <div>
@@ -349,6 +452,7 @@ const CompactPaymentForm: React.FC<{
         </button>
       </form>
     </div>
+    </>
   );
 };
 

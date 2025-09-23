@@ -1,12 +1,12 @@
-// This is a mock Stripe implementation since we don't have the actual keys
-// In production, you'd use the real Stripe library and configure with your keys
-
+// Real Stripe implementation using test keys from environment variables
+import Stripe from 'stripe';
 import { getPrismaClient } from './prisma';
 import { tokenService } from './tokens';
 
-// In a real application, you would import and configure Stripe:
-// import Stripe from 'stripe';
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+// Initialize Stripe with secret key from environment
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { 
+  apiVersion: '2023-10-16' 
+});
 
 // Constants
 const CURRENCY = 'usd';
@@ -14,77 +14,6 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_mock_secret_k
 
 // Get singleton Prisma client
 const prisma = getPrismaClient();
-
-// Mock Stripe functionality for development
-const mockStripe = {
-  checkout: {
-    sessions: {
-      create: async (params: { payment_method_types?: string[]; line_items: Array<{ price_data: { currency: string; product_data: { name: string; description?: string }; unit_amount: number }; quantity: number }>; mode: string; success_url: string; cancel_url: string; metadata?: Record<string, string> }) => {
-        const sessionId = `cs_test_${Math.random().toString(36).substring(2, 15)}`;
-        
-        // Log the request for debugging
-        console.log('Creating Stripe checkout session:', params);
-        
-        // In a real implementation, Stripe would return a proper response
-        return {
-          id: sessionId,
-          url: `https://checkout.stripe.com/pay/${sessionId}`
-        };
-      }
-    }
-  },
-  
-  paymentIntents: {
-    create: async (params: { amount: number; currency: string; metadata?: Record<string, string> }) => {
-      const paymentIntentId = `pi_test_${Math.random().toString(36).substring(2, 15)}`;
-      
-      // Log the request for debugging
-      console.log('Creating Stripe payment intent:', params);
-      
-      // In a real implementation, Stripe would return a proper response
-      return {
-        id: paymentIntentId,
-        client_secret: `${paymentIntentId}_secret_${Math.random().toString(36).substring(2, 15)}`,
-        amount: params.amount,
-        currency: params.currency,
-        status: 'requires_payment_method'
-      };
-    },
-    
-    confirm: async (paymentIntentId: string, params: { payment_method?: string; return_url?: string; amount?: number }) => {
-      console.log('Confirming payment intent:', paymentIntentId, params);
-      
-      // Mock successful confirmation
-      return {
-        id: paymentIntentId,
-        status: 'succeeded',
-        amount_received: params.amount || 0
-      };
-    }
-  },
-  
-  webhooks: {
-    constructEvent: (body: string, signature: string, secret: string) => {
-      // In a real implementation, this would verify the signature
-      // and parse the webhook payload
-      
-      try {
-        const data = JSON.parse(body);
-        return {
-          type: data.type,
-          data: {
-            object: data.data?.object || {}
-          }
-        };
-      } catch (err) {
-        throw new Error('Invalid webhook payload');
-      }
-    }
-  }
-};
-
-// Use this in development, replace with real Stripe in production
-const stripe = mockStripe;
 
 export const stripeService = {
   // Create a payment intent for token purchase
@@ -199,7 +128,7 @@ export const stripeService = {
                 name: tokenPackage.name,
                 description: `${tokenPackage.tokens} download tokens for FakeMyRide`,
               },
-              unit_amount: Math.round(tokenPackage.price * 100), // Convert to cents
+              unit_amount: tokenPackage.price, // Price is already in cents
             },
             quantity: 1,
           },
