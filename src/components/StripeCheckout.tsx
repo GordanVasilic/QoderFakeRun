@@ -423,7 +423,7 @@ export const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
                     <div className="text-center mt-1">
                       <h4 className="text-sm font-bold text-gray-900 mb-2">{pkg.name}</h4>
-                      <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-lg font-bold my-2">
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-100 text-blue-800 px-3 py-2 rounded-lg text-lg font-bold my-2 border border-blue-200">
                         {pkg.tokens} tokens
                       </div>
                       <div className="text-sm font-bold text-blue-600 my-1">
