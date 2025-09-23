@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
           user = {
             id: 'cmeu1kwjg0000w5zgh3xdrxma',
             email: 'admin@qoderfakerun.com',
-            role: 'ADMIN'
+            role: 'ADMIN',
+            tokenBalance: 0
           }
         }
       } catch (jwtError) {

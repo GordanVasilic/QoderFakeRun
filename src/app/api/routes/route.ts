@@ -286,52 +286,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform routes for response (add preview data)
-    const transformedRoutes = result.routes.map((route: {
-      id: string;
-      name: string;
-      description?: string;
-      date?: string;
-      startTime?: string;
-      activityType: string;
-      stats: {
-        distance: number;
-        duration: number;
-        elevationGain: number;
-        pointCount: number;
-        averagePace: number;
-        averageHeartRate?: number;
-        difficulty?: string;
-      };
-      createdAt: Date;
-      updatedAt: Date;
-      paceHeartRateSettings?: {
-        averagePace: number;
-        paceInconsistency: number;
-        includeHeartRate: boolean;
-        averageHeartRate: number;
-        heartRateVariability: number;
-      };
-      routeData?: {
-        points: Array<{ lat: number; lng: number; elevation?: number; timestamp?: number; pace?: number; heartRate?: number; distanceFromStart?: number }>;
-        distance: number;
-        duration: number;
-        elevationGain: number;
-        averagePace: number;
-        paceHeartRateSettings?: {
-          averagePace: number;
-          paceInconsistency: number;
-          includeHeartRate: boolean;
-          averageHeartRate: number;
-          heartRateVariability: number;
-        };
-        routeGeometry?: {
-          coordinates: Array<[number, number]>;
-          type: string;
-        };
-        routeCoordinates?: Array<[number, number]>;
-        routeElevations?: number[];
-      };
-    }) => ({
+    const transformedRoutes = result.routes.map((route: any) => ({
       id: route.id,
       name: route.name,
       description: route.description,

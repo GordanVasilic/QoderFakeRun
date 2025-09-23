@@ -18,7 +18,7 @@ const ConfirmPaymentSchema = z.object({
 
 // Confirm payment and add tokens to user account
 export async function POST(request: NextRequest) {
-  let body: { paymentIntentId: string; paymentMethodId: string; paymentId: string; anonymousId?: string };
+  let body: { paymentIntentId: string; paymentMethodId: string; paymentId: string; anonymousId?: string } | undefined;
   try {
     // Rate limiting
     const clientIP = getClientIP(request);

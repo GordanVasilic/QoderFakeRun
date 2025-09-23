@@ -190,7 +190,7 @@ export function generateTCX(routeData: RouteData, options: FileGenerationOptions
         <Calories>${Math.round(routeData.distance * (activityType === 'bike' ? 40 : 70))}</Calories>`
 
   if (includeHeartRate && chartData && chartData.length > 0) {
-    const validHeartRates = chartData.filter(point => point.heartRate && point.heartRate > 50).map(point => point.heartRate)
+    const validHeartRates = chartData.filter(point => point.heartRate && point.heartRate > 50).map(point => point.heartRate!)
     if (validHeartRates.length > 0) {
       const avgHeartRate = validHeartRates.reduce((sum, hr) => sum + hr, 0) / validHeartRates.length
       const maxHeartRate = Math.max(...validHeartRates)

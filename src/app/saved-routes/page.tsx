@@ -228,7 +228,7 @@ export default function SavedRoutesPage() {
         // Fallback: store whatever data we have from the preview
         const fallbackData = {
           routeData: {
-            ...(route.routeData as Record<string, unknown> || {}),
+            ...(route.routeData as unknown as Record<string, unknown> || {}),
             // Try to extract coordinates and elevations from routeGeometry if available
             routeCoordinates: (route.routeData as { routeCoordinates?: Array<[number, number]>; routeGeometry?: { coordinates?: Array<[number, number]> } })?.routeCoordinates || (route.routeData as { routeGeometry?: { coordinates?: Array<[number, number]> } })?.routeGeometry?.coordinates || [],
             routeElevations: (route.routeData as { routeElevations?: number[] })?.routeElevations || [],
@@ -287,7 +287,7 @@ export default function SavedRoutesPage() {
         // Store the route data in sessionStorage for the main page to pick up
         const dataToStore = {
           routeData: {
-            ...(route.routeData as Record<string, unknown> || {}),
+            ...(route.routeData as unknown as Record<string, unknown> || {}),
             // Ensure all stats properties are included from both routeData and stats objects
             distance: route.routeData?.distance || route.stats?.distance || 0,
             duration: route.routeData?.duration || route.stats?.duration || 0,

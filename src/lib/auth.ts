@@ -11,9 +11,13 @@ const SALT_ROUNDS = 10;
 export interface UserSession {
   id: string;
   email: string;
-  username?: string;
+  username?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatar?: string | null;
   role: string;
   tokenBalance: number;
+  isPublic?: boolean;
 }
 
 export interface LoginCredentials {
@@ -115,9 +119,9 @@ export const authService = {
         user: {
           id: user.id,
           email: user.email,
-          username: user.username,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          username: user.username || undefined,
+          firstName: user.firstName || undefined,
+          lastName: user.lastName || undefined,
           role: user.role,
           tokenBalance: user.tokenBalance,
         }, 
@@ -170,9 +174,9 @@ export const authService = {
         user: {
           id: user.id,
           email: user.email,
-          username: user.username,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          username: user.username || undefined,
+          firstName: user.firstName || undefined,
+          lastName: user.lastName || undefined,
           role: user.role,
           tokenBalance: user.tokenBalance,
         }, 
@@ -233,7 +237,7 @@ export const authService = {
         console.log('❌ getUserFromToken: User not found in database for ID:', decoded.id);
       }
 
-      return user;
+      return user as UserSession;
     } catch (error) {
       console.error('❌ getUserFromToken error:', error);
       return null;

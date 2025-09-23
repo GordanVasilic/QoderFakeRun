@@ -115,10 +115,12 @@ export function getWebGLDiagnostics(canvas?: HTMLCanvasElement): WebGLDiagnostic
           jsHeapSizeLimit?: number;
         };
       }).memory;
-      diagnostics.memoryInfo = {
-        totalJSHeapSize: memInfo.totalJSHeapSize,
-        usedJSHeapSize: memInfo.usedJSHeapSize,
-        jsHeapSizeLimit: memInfo.jsHeapSizeLimit
+      if (memInfo) {
+        diagnostics.memoryInfo = {
+          totalJSHeapSize: memInfo.totalJSHeapSize,
+          usedJSHeapSize: memInfo.usedJSHeapSize,
+          jsHeapSizeLimit: memInfo.jsHeapSizeLimit
+        }
       }
     }
 

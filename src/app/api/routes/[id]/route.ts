@@ -38,7 +38,8 @@ export async function GET(
           user = {
             id: 'cmeu1kwjg0000w5zgh3xdrxma',
             email: 'admin@qoderfakerun.com',
-            role: 'ADMIN'
+            role: 'ADMIN',
+            tokenBalance: 0
           };
           console.log('GET route - Admin bypass activated for user:', user.email);
         }
@@ -130,7 +131,8 @@ export async function DELETE(
           user = {
             id: 'cmeu1kwjg0000w5zgh3xdrxma',
             email: 'admin@qoderfakerun.com',
-            role: 'ADMIN'
+            role: 'ADMIN',
+            tokenBalance: 0
           };
           console.log('DELETE route - Admin bypass activated for user:', user.email);
         }

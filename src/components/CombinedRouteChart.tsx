@@ -93,7 +93,7 @@ export default function CombinedRouteChart({
   }, [])
 
   // Handle chart interactions
-  const handleChartMouseMove = useCallback((data: { activePayload?: Array<{ payload: ChartDataPoint }> }) => {
+  const handleChartMouseMove = useCallback((data: any) => {
     if (!editMode || !isDragging || activePoint === null) return
     // Chart editing logic would go here
   }, [editMode, isDragging, activePoint])
@@ -142,28 +142,28 @@ export default function CombinedRouteChart({
           {payload.map((entry: { value: number; dataKey: string; color: string }, index: number) => {
             if (!metricVisibility[entry.dataKey as keyof MetricVisibility]) return null
             
-            let value = entry.value
+            let value: string | number = entry.value
             let unit = ''
             const color = entry.color
 
             switch (entry.dataKey) {
               case 'elevation':
-                value = `${Math.round(value)}m`
+                value = `${Math.round(entry.value)}m`
                 unit = 'Elevation'
                 break
               case 'pace':
                 if (activityType === 'bike') {
                   // For bike mode, value is already speed
-                  value = formatSpeed(value)
+                  value = formatSpeed(entry.value)
                   unit = `Speed (${unitSystem === 'imperial' ? 'mph' : 'km/h'})`
                 } else {
                   // For running, value is already converted pace
-                  value = formatPace(value)
+                  value = formatPace(entry.value)
                   unit = `Pace (${unitSystem === 'imperial' ? 'min/mi' : 'min/km'})`
                 }
                 break
               case 'heartRate':
-                value = `${Math.round(value)} bpm`
+                value = `${Math.round(entry.value)} bpm`
                 unit = 'Heart Rate'
                 break
             }

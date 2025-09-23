@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
         amount: number;
         packageName: string;
         tokens: number;
+        anonymousId?: string;
       };
-      anonymousId?: string;
     } = {
       success: true,
       data: {

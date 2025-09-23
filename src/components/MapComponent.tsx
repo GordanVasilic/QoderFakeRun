@@ -256,7 +256,7 @@ export default function MapComponent({
     // Show waypoints when: in draw mode OR when showWaypoints is enabled
     const shouldShowWaypoints = selectedShapeRef.current === 'draw' || showWaypointsRef.current
     
-    const waypointsSource = map.current.getSource('waypoints') as mapboxgl.GeoJSONSource
+    const waypointsSource = map.current.getSource('waypoints') as mapboxgl.GeoJSONSource | null
     if (!waypointsSource) return
     
     if (shouldShowWaypoints && points.length > 0) {
@@ -308,7 +308,7 @@ export default function MapComponent({
         console.log('🗺️ Loading full route with', initialRouteData.routeCoordinates.length, 'coordinates')
         
         // Update route line source with loaded geometry
-        const routeSource = map.current?.getSource('route') as mapboxgl.GeoJSONSource
+        const routeSource = map.current?.getSource('route') as mapboxgl.GeoJSONSource | null
         if (routeSource) {
           console.log('📍 Updating route source with loaded geometry')
           routeSource.setData({
@@ -350,7 +350,7 @@ export default function MapComponent({
       updateWaypoints(initialRouteData.points)
       
       // Update direct line source
-      const directLineSource = map.current?.getSource('direct-line') as mapboxgl.GeoJSONSource
+      const directLineSource = map.current?.getSource('direct-line') as mapboxgl.GeoJSONSource | null
       if (directLineSource) {
         console.log('📏 Updating direct line source')
         directLineSource.setData({
@@ -777,9 +777,9 @@ export default function MapComponent({
     const addSourceSafely = (id: string, source: mapboxgl.AnySourceData) => {
       if (map.current?.getSource(id)) {
         console.log(`📋 Source '${id}' already exists, updating data...`)
-        const existingSource = map.current.getSource(id) as mapboxgl.GeoJSONSource
-        if (existingSource && 'setData' in existingSource) {
-          existingSource.setData(source.data)
+        const existingSource = map.current.getSource(id) as mapboxgl.GeoJSONSource | null
+        if (existingSource && 'setData' in existingSource && source.type === 'geojson') {
+          existingSource.setData((source as any).data)
         }
       } else {
         console.log(`➕ Adding new source '${id}'...`)
@@ -1249,7 +1249,15 @@ export default function MapComponent({
       // Check cache first
       if (routeCacheRef.current.has(cacheKey)) {
         console.log('📋 Using cached route for', points.length, 'points')
-        return routeCacheRef.current.get(cacheKey)
+        const cached = routeCacheRef.current.get(cacheKey);
+        if (cached) {
+          return {
+            geometry: { coordinates: (cached as any).geometry?.coordinates || [] },
+            distance: (cached as any).distance || 0,
+            duration: (cached as any).duration || 0
+          };
+        }
+        return null;
       }
       
       console.log('📍 Fetching new route for', points.length, 'points')
@@ -1472,7 +1480,7 @@ export default function MapComponent({
           routeGeometry = {
             type: 'LineString',
             coordinates: points.map(p => [p.lng, p.lat])
-          }
+          } as any
           routeDistance = calculateDirectDistance(points)
           routeDuration = routeDistance * 5.5 * 60 // Estimate based on 5.5 min/km pace
           
@@ -1483,8 +1491,8 @@ export default function MapComponent({
       } else {
         routeGeometry = {
           type: 'LineString',
-          coordinates: points.map(p => [p.lng, p.lat])
-        }
+          coordinates: (routeGeometry as any)?.coordinates || points.map(p => [p.lng, p.lat])
+        } as any
         
         // Single point - try to get elevation from API
         if (points.length === 1) {
@@ -1493,17 +1501,17 @@ export default function MapComponent({
       }
       
       // Update route line
-      const routeSource = map.current.getSource('route') as mapboxgl.GeoJSONSource
+      const routeSource = map.current.getSource('route') as mapboxgl.GeoJSONSource | null
       if (routeSource && routeGeometry) {
         routeSource.setData({
           type: 'Feature',
           properties: {},
-          geometry: routeGeometry
+          geometry: routeGeometry as any
         })
       }
       
       // Update direct line (waypoint connections)
-      const directLineSource = map.current.getSource('direct-line') as mapboxgl.GeoJSONSource
+      const directLineSource = map.current.getSource('direct-line') as mapboxgl.GeoJSONSource | null
       if (directLineSource) {
         directLineSource.setData({
           type: 'Feature',
@@ -1528,7 +1536,7 @@ export default function MapComponent({
         duration: routeDuration,
         elevationGain: routeElevationGain,
         averagePace: routeDistance > 0 ? (routeDuration / 60) / routeDistance : 5.5,
-        routeGeometry: routeGeometry,
+        routeGeometry: routeGeometry as any,
         routeCoordinates: routeGeometry?.coordinates || [],
         routeElevations: routeElevations
       }
@@ -1791,7 +1799,7 @@ export default function MapComponent({
                   className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 focus:outline-none focus:bg-gray-50 transition-colors"
                 >
                   <div className="text-sm font-medium text-gray-900">
-                    {suggestion.text}
+                    {suggestion.text as string}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
                     {suggestion.place_name}

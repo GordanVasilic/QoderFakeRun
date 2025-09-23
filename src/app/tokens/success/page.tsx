@@ -32,7 +32,7 @@ function TokenPurchaseSuccessContent() {
         
         if (result.success && result.data) {
           setStatus('success');
-          setTokensAdded(result.data.tokensAdded || 0);
+          setTokensAdded(Number(result.data.tokensAdded) || 0);
           setMessage(`Successfully added ${result.data.tokensAdded} tokens to your account!`);
           
           // Reset the payment state after successful verification

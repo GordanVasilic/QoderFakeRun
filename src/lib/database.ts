@@ -245,9 +245,9 @@ class DatabaseService {
         FROM route_waypoints
         WHERE \"routeId\" = ${routeId}
         ORDER BY sequence ASC
-      `
+      `;
       
-      routeData.waypoints = waypoints
+      (routeData as any).waypoints = waypoints;
     }
 
     return routeData
@@ -323,7 +323,7 @@ class DatabaseService {
         JOIN tags t ON rt.\"tagId\" = t.id
       `
       whereClause += ` AND t.name = ANY($${params.length + 1})`
-      params.push(tags)
+      params.push(tags.join(','))
     }
 
     const routes = await this.prisma.$queryRawUnsafe(`

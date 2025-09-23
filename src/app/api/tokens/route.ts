@@ -124,8 +124,8 @@ export async function POST(request: NextRequest) {
         sessionId: string;
         sessionUrl: string;
         paymentId: string;
+        anonymousId?: string;
       };
-      anonymousId?: string;
     } = {
       success: true,
       data: {

@@ -113,7 +113,7 @@ export default function ProfilePage() {
                 <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center mb-4">
                   {user.avatar ? (
                     <img 
-                      src={user.avatar} 
+                      src={user.avatar as string} 
                       alt={`${user.firstName || user.username || 'User'}'s avatar`}
                       className="w-full h-full object-cover rounded-full"
                     />
@@ -136,7 +136,7 @@ export default function ProfilePage() {
                   <h3 className="text-md font-semibold text-blue-800 mb-2">Download Tokens</h3>
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-2xl font-bold text-blue-700">{user.tokenBalance}</span>
+                      <span className="text-2xl font-bold text-blue-700">{user.tokenBalance as React.ReactNode}</span>
                       <span className="text-sm text-blue-600 ml-1">tokens</span>
                     </div>
                     <a 

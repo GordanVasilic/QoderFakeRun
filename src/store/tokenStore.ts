@@ -119,7 +119,7 @@ export const useTokenStore = create<TokenState>()(
             headers['Authorization'] = `Bearer ${authState.token}`;
           } else {
             // For anonymous users, ensure we have an ID
-            requestData.anonymousId = ensureAnonymousId();
+            requestData.anonymousId = ensureAnonymousId() || undefined;
           }
           
           // Make API request

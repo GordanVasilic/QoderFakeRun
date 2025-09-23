@@ -46,7 +46,7 @@ function TokensContent() {
   
   const handlePackageSelect = (packageId: string) => {
     const pkg = packages.find(p => p.id === packageId)
-    setSelectedPackage(pkg)
+    setSelectedPackage(pkg || null)
   }
   
   const handlePurchase = async () => {
