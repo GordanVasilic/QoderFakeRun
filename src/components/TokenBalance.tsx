@@ -75,10 +75,8 @@ export const TokenBalance: React.FC<TokenBalanceProps> = ({
 
   useEffect(() => {
     loadWallet();
-    // Always fetch fresh balance on component mount to avoid stale cached data
-    updateTokenBalance().catch(console.error);
   }, []);
-  
+
   // Listen for changes in token balance from authStore
   useEffect(() => {
     // Always update wallet balance when currentBalance changes, even if wallet isn't fully loaded yet

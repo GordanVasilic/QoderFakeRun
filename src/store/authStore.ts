@@ -176,13 +176,15 @@ export const useAuthStore = create<AuthState>()(
               const currentAnonymousBalance = get().anonymousTokenBalance;
               console.log('🔍 [authStore] checkAuth - current anonymous balance before server sync:', currentAnonymousBalance);
               
-              // Update token balance for anonymous users - but don't fail checkAuth if it fails
-              try {
-                const serverBalance = await get().updateTokenBalance();
-                console.log('🔍 [authStore] checkAuth - server returned balance:', serverBalance);
-                console.log('🔍 [authStore] checkAuth - balance after server sync:', get().anonymousTokenBalance);
-              } catch (balanceError) {
-                console.warn('Failed to update token balance during checkAuth, but continuing:', balanceError);
+              // Only update token balance if we don't have a cached balance
+              if (currentAnonymousBalance === 0) {
+                try {
+                  const serverBalance = await get().updateTokenBalance();
+                  console.log('🔍 [authStore] checkAuth - server returned balance:', serverBalance);
+                  console.log('🔍 [authStore] checkAuth - balance after server sync:', get().anonymousTokenBalance);
+                } catch (balanceError) {
+                  console.warn('Failed to update token balance during checkAuth, but continuing:', balanceError);
+                }
               }
               return false;
             }
@@ -221,13 +223,6 @@ export const useAuthStore = create<AuthState>()(
           console.log('🔄 [authStore] updateTokenBalance called');
           const { user, anonymousId } = get();
           
-          // Clear any cached balance first to prevent showing stale data
-          if (user) {
-            set({ tokenBalance: 0 });
-          } else {
-            set({ anonymousTokenBalance: 0 });
-          }
-          
           // Retry logic with exponential backoff and better error handling
           const fetchWithRetry = async (url: string, maxRetries = 3) => {
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -236,9 +231,9 @@ export const useAuthStore = create<AuthState>()(
                 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => {
-                  console.warn(`⏰ [authStore] Request timeout after 10s on attempt ${attempt}`);
+                  console.warn(`⏰ [authStore] Request timeout after 5s on attempt ${attempt}`);
                   controller.abort();
-                }, 10000); // 10 second timeout
+                }, 5000); // Reduced timeout to 5 seconds
                 
                 const response = await fetch(url, {
                   signal: controller.signal,
