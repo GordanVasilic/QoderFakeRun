@@ -12,7 +12,7 @@ class ApiClient {
 
   constructor() {
     this.baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://yourdomain.com' 
+      ? 'https://fakemyride.com' 
       : 'http://localhost:3000'  // Fixed: Use port 3000 for development
   }
 
