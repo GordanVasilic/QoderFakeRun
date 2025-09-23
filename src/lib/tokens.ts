@@ -18,10 +18,10 @@ export interface TokenPackage {
 
 // Token packages available for purchase
 const TOKEN_PACKAGES: TokenPackage[] = [
-  { id: 'starter', name: 'Start', tokens: 3, price: 2.00 }, // $2.00 - 3 tokens
-  { id: 'popular', name: 'Popular', tokens: 10, price: 5.00, popular: true }, // $5.00 - 10 tokens
-  { id: 'pro', name: 'Pro', tokens: 20, price: 9.00 }, // $9.00 - 20 tokens
-  { id: 'ultimate', name: 'Ultimate', tokens: 50, price: 15.00 }, // $15.00 - 50 tokens
+  { id: 'starter', name: 'Start', tokens: 3, price: 200 }, // $2.00 - 3 tokens (stored in cents)
+  { id: 'popular', name: 'Popular', tokens: 10, price: 500, popular: true }, // $5.00 - 10 tokens (stored in cents)
+  { id: 'pro', name: 'Pro', tokens: 20, price: 900 }, // $9.00 - 20 tokens (stored in cents)
+  { id: 'ultimate', name: 'Ultimate', tokens: 50, price: 1500 }, // $15.00 - 50 tokens (stored in cents)
 ];
 
 const ANONYMOUS_TOKEN_EXPIRY_DAYS = 30; // Anonymous tokens expire after 30 days

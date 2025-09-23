@@ -349,7 +349,7 @@ export class TokenService {
    * Calculate price per token for a package
    */
   public static getPricePerToken(tokenPackage: TokenPackage): string {
-    const pricePerToken = tokenPackage.price_cents / tokenPackage.tokens / 100;
+    const pricePerToken = tokenPackage.price_cents / 100 / tokenPackage.tokens;
     return `$${pricePerToken.toFixed(2)} per token`;
   }
 

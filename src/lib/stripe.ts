@@ -115,7 +115,7 @@ export const stripeService = {
         data: {
           userId,
           anonymousId,
-          amount: tokenPackage.price,
+          amount: tokenPackage.price, // Price is already in cents
           currency: CURRENCY,
           status: 'PENDING',
           tokensPurchased: tokenPackage.tokens
@@ -124,7 +124,7 @@ export const stripeService = {
       
       // Create a payment intent with Stripe
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(tokenPackage.price * 100), // Convert to cents
+        amount: tokenPackage.price, // Price is already in cents
         currency: CURRENCY,
         metadata: {
           paymentId: paymentTransaction.id,

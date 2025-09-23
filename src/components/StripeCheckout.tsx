@@ -8,9 +8,9 @@ import { CreditCard, Check, Star, ExternalLink, ArrowLeft, AlertCircle } from 'l
 import { tokenService } from '@/lib/tokens';
 import type { TokenPackage } from '@/lib/tokens';
 
-// Helper function to format price
-const formatPrice = (price: number): string => {
-  return `$${(price / 100).toFixed(2)}`;
+// Helper function to format price from cents to dollars
+const formatPrice = (priceInCents: number): string => {
+  return (priceInCents / 100).toFixed(2);
 };
 import { toast } from 'sonner';
 import { loadStripe } from '@stripe/stripe-js';
@@ -82,7 +82,7 @@ const CompactPaymentForm: React.FC<{
   const { user, token } = useAuthStore();
   const [zipCode, setZipCode] = useState('');
   const [country, setCountry] = useState('US');
-  const [showZipField, setShowZipField] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
 
   // Default postal codes for countries that require them
   const getDefaultPostalCode = (countryCode: string): string => {
@@ -119,6 +119,15 @@ const CompactPaymentForm: React.FC<{
       setElementsError(null);
     }
   }, [stripe, elements]);
+
+  // Handle card element changes for real-time validation
+  const handleCardChange = (event: any) => {
+    if (event.error) {
+      setCardError(event.error.message);
+    } else {
+      setCardError(null);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -278,34 +287,35 @@ const CompactPaymentForm: React.FC<{
                     },
                   },
                 },
+                hidePostalCode: true,
               }}
-              onChange={(event) => {
-                // Show zip field when user starts typing card number
-                if (event.elementType === 'card' && event.complete) {
-                  setShowZipField(true);
-                } else if (event.elementType === 'card' && !event.empty) {      
-                  setShowZipField(true);
-                }
-              }}
+              onChange={handleCardChange}
             />
           </div>
+          {cardError && (
+            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 text-red-700">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">{cardError}</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* CVC and Zip Code in one row (when zip is shown) */}
-        {showZipField && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Postal Code <span className="text-gray-500 text-xs">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={zipCode}
-              onChange={(e) => setZipCode(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={getDefaultPostalCode(country)}
-            />
-          </div>
-        )}
+        {/* Postal Code - Always visible and required */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Postal Code
+          </label>
+          <input
+            type="text"
+            value={zipCode}
+            onChange={(e) => setZipCode(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder={getDefaultPostalCode(country)}
+            required
+          />
+        </div>
 
         {/* Country */}
         <div>
@@ -438,7 +448,7 @@ export const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                         {formatPrice(pkg.price)}
                       </div>
                       <div className="text-xs text-gray-600">
-                        ${(pkg.price / pkg.tokens).toFixed(2)} per token
+                        ${(pkg.price / 100 / pkg.tokens).toFixed(2)} per token
                       </div>
                     </div>
 
