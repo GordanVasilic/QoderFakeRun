@@ -272,7 +272,7 @@ export default function RunDetails({
 
         {/* Download & Save Section */}
         <div className="border-t border-gray-100 pt-6">
-          <h4 className="text-base font-semibold text-gray-900 mb-4">Actions</h4>
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">Actions</h4>
           
           <div className="grid gap-3">
             {/* Token Redemption Section */}

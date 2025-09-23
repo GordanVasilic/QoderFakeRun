@@ -289,7 +289,7 @@ export const TokenBalance: React.FC<TokenBalanceProps> = ({
                       <div className={`w-2 h-2 rounded-full ${
                         pkg.popular ? 'bg-gradient-to-r from-blue-500 to-purple-600' : 'bg-gradient-to-r from-gray-400 to-gray-500'
                       }`}></div>
-                      <h4 className="text-xs font-medium text-gray-700">{pkg.name}</h4>
+                      <h4 className="text-sm font-medium text-gray-700">{pkg.name}</h4>
                     </div>
                     
                     <div className="space-y-0.5">
@@ -331,7 +331,7 @@ export const TokenBalance: React.FC<TokenBalanceProps> = ({
       {/* Email Link Section */}
       {showEmailLink && !wallet?.email_linked && (
         <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">
+          <h4 className="text-base font-medium text-gray-900 mb-2">
             Link Email for Backup
           </h4>
           <div className="flex space-x-2">

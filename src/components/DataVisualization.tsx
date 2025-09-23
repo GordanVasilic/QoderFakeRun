@@ -54,7 +54,7 @@ export default function DataVisualization({ routeData }: DataVisualizationProps)
       {/* Pace Profile */}
       <div className="card">
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-md font-medium text-gray-900">Pace Profile</h4>
+          <h4 className="text-lg font-medium text-gray-900">Pace Profile</h4>
           <div className="text-sm text-gray-500">
             Average: {formatPace(routeData.averagePace)} min/km
           </div>
@@ -108,7 +108,7 @@ export default function DataVisualization({ routeData }: DataVisualizationProps)
       {/* Elevation Profile */}
       <div className="card">
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-md font-medium text-gray-900">Elevation Profile</h4>
+          <h4 className="text-lg font-medium text-gray-900">Elevation Profile</h4>
           <div className="text-sm text-gray-500">
             Total Gain: {Math.round(totalElevationGain)}m
           </div>

@@ -168,7 +168,7 @@ export default function PaceHeartRateSettings({
 
   return (
     <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-4">
-      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+      <h4 className="text-base font-semibold text-gray-700 mb-3 flex items-center gap-2">
         <span>⚙️</span>
         Pace & Heart Rate Settings
       </h4>
