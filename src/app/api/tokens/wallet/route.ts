@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '../../../../lib/prisma';
+import { db } from '@/lib/prisma';
 
 export async function GET(request: Request) {
   const requestId = Math.random().toString(36).substr(2, 9);

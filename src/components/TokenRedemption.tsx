@@ -31,6 +31,9 @@ interface TokenRedemptionProps {
   
   // Modal trigger for insufficient tokens
   onShowTokenModal?: () => void;
+  
+  // Callback to trigger purchase modal (like the Buy Tokens button)
+  onShowPurchaseModal?: () => void;
 }
 
 export const TokenRedemption: React.FC<TokenRedemptionProps> = ({
@@ -46,7 +49,8 @@ export const TokenRedemption: React.FC<TokenRedemptionProps> = ({
   onDownloadStart,
   onDownloadComplete,
   className = '',
-  onShowTokenModal
+  onShowTokenModal,
+  onShowPurchaseModal
 }) => {
   // Use cost if provided, otherwise use tokensRequired, default to 1
   const requiredTokens = cost || tokensRequired || 1;
@@ -294,7 +298,7 @@ export const TokenRedemption: React.FC<TokenRedemptionProps> = ({
             </div>
             
             <button
-              onClick={onShowTokenModal || (() => window.location.reload())}
+              onClick={onShowPurchaseModal || onShowTokenModal || (() => window.location.reload())}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
             >
               Buy More Tokens

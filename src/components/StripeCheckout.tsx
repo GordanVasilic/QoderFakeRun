@@ -174,6 +174,8 @@ const CompactPaymentForm: React.FC<{
       }
 
       // Confirm payment - use mock confirmation in development
+      let paymentConfirmed = false;
+      
       if (process.env.NODE_ENV === 'development') {
         // Mock payment confirmation for development
         console.log('Mock payment confirmation in development mode');
@@ -187,6 +189,7 @@ const CompactPaymentForm: React.FC<{
         };
         
         console.log('Mock payment confirmed:', mockConfirmResult);
+        paymentConfirmed = true;
       } else {
         // Real Stripe confirmation for production
         const { error: confirmError } = await stripe.confirmCardPayment(
@@ -199,6 +202,11 @@ const CompactPaymentForm: React.FC<{
         if (confirmError) {
           throw new Error(confirmError.message || 'Payment confirmation failed');
         }
+        paymentConfirmed = true;
+      }
+
+      if (!paymentConfirmed) {
+        throw new Error('Payment confirmation failed');
       }
 
       // Confirm payment on backend

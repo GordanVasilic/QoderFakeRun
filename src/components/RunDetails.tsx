@@ -1,13 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Download, Calendar, Clock, FileText } from 'lucide-react'
+import { useAuthStore } from '@/store/authStore'
+import { useToast } from '@/hooks/useToast'
 import { apiClient, handleApiResponse } from '@/lib/apiClient'
 import { downloadFile } from '@/utils/fileGeneration'
-import { useToast } from '@/hooks/useToast'
-import Toast from '@/components/Toast'
-import TokenRedemption from '@/components/TokenRedemption'
-import { TokenBalance } from '@/components/TokenBalance'
-import type { RouteData, PaceHeartRateSettings } from '@/types'
+import { tokenService } from '@/lib/tokens'
+import Toast from './Toast'
+import TokenRedemption from './TokenRedemption'
+import { StripeCheckout } from './StripeCheckout'
+import Modal from './ui/Modal'
+import type { RouteData, ChartDataPoint, PaceHeartRateSettings } from '@/types'
 
 interface RunDetailsProps {
   routeData: RouteData
@@ -56,9 +60,28 @@ export default function RunDetails({
   const [description, setDescription] = useState(initialDescription)
   const [fileFormat, setFileFormat] = useState<'gpx' | 'tcx' | 'both'>('gpx')
   const [isGenerating, setIsGenerating] = useState(false)
-  const [showTokenModal, setShowTokenModal] = useState(false)
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
+  
+  // Get token packages from service (same as TokenBalance)
+  const packages = tokenService.getTokenPackages()
   
   const { toast, showSuccess, showError, hideToast } = useToast()
+
+  // Payment success handler (same as TokenBalance)
+  const handlePaymentSuccess = async (tokens: number) => {
+    try {
+      setShowPurchaseModal(false);
+      showSuccess(`Successfully purchased ${tokens} tokens!`);
+    } catch (error) {
+      console.error('Error after payment:', error);
+      showError('Payment successful, but failed to update balance. Please refresh the page.');
+    }
+  };
+
+  // Close modal handler (same as TokenBalance)
+  const handleCloseModal = () => {
+    setShowPurchaseModal(false);
+  };
 
   // Update state when initial props change (for loading saved routes)
   useEffect(() => {
@@ -284,7 +307,7 @@ export default function RunDetails({
               isProcessing={isGenerating}
               processingText="Generating..."
               className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200"
-              onShowTokenModal={() => setShowTokenModal(true)}
+              onShowPurchaseModal={() => setShowPurchaseModal(true)}
             />
             
 
@@ -368,25 +391,19 @@ export default function RunDetails({
         onClose={hideToast}
       />
       
-      {/* Token Purchase Modal */}
-      {showTokenModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-sm w-full">
-            <TokenBalance 
-              showPurchaseButton={true}
-              className="p-4"
-            />
-            <div className="p-4 border-t">
-              <button
-                onClick={() => setShowTokenModal(false)}
-                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Purchase Modal using Portal */}
+      <Modal
+        isOpen={showPurchaseModal}
+        onClose={handleCloseModal}
+        title="Purchase Tokens"
+        maxWidth="max-w-sm"
+      >
+        <StripeCheckout 
+          packages={packages}
+          onSuccess={handlePaymentSuccess}
+          onCancel={handleCloseModal}
+        />
+      </Modal>
     </div>
   )
 }
