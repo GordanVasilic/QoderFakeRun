@@ -11,11 +11,8 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// In development, create a new client each time to avoid prepared statement conflicts
-// In production, use singleton pattern for better performance
-export const db = process.env.NODE_ENV === 'development' 
-  ? createPrismaClient()
-  : (globalForPrisma.prisma ?? createPrismaClient())
+// Always use singleton pattern to avoid prepared statement conflicts during build
+export const db = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 

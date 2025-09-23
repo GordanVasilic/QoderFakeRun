@@ -142,16 +142,28 @@ export const useAuthStore = create<AuthState>()(
         },
         
         logout: () => {
-          set({ 
-            isAuthenticated: false,
-            user: null,
-            token: null,
-            tokenBalance: 0,
-            error: null
-          });
-        },
+            // Check if we're on the client side
+            if (typeof window === 'undefined') {
+              return;
+            }
+            
+            console.log('🚪 [authStore] logout called');
+            set({
+              isAuthenticated: false,
+              user: null,
+              token: null,
+              tokenBalance: 0,
+              loading: false,
+              error: null
+            });
+          },
         
         checkAuth: async () => {
+          // Check if we're on the client side
+          if (typeof window === 'undefined') {
+            return false;
+          }
+          
           try {
             const token = get().token;
             
@@ -201,6 +213,11 @@ export const useAuthStore = create<AuthState>()(
         },
         
         updateTokenBalance: async () => {
+          // Check if we're on the client side
+          if (typeof window === 'undefined') {
+            return 0;
+          }
+          
           console.log('🔄 [authStore] updateTokenBalance called');
           const { user, anonymousId } = get();
           
@@ -373,6 +390,11 @@ export const useAuthStore = create<AuthState>()(
 
 // Helper to ensure we have an anonymous ID
 export function ensureAnonymousId() {
+  // Check if we're on the client side
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
   const { anonymousId, isAuthenticated } = useAuthStore.getState();
   
   console.log('ensureAnonymousId called - isAuthenticated:', isAuthenticated, 'existing anonymousId:', anonymousId);

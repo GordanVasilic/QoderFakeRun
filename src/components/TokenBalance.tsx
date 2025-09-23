@@ -69,7 +69,7 @@ export const TokenBalance: React.FC<TokenBalanceProps> = ({
     tokenBalance,
     anonymousTokenBalance,
     currentBalance,
-    persistedData: localStorage.getItem('auth-storage')
+    persistedData: typeof window !== 'undefined' ? localStorage.getItem('auth-storage') : null
   });
 
 

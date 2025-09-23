@@ -247,6 +247,11 @@ export const authService = {
   // Initialize admin user if it doesn't exist
   async initAdminUser(): Promise<void> {
     try {
+      // Skip admin initialization during build
+      if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+        return;
+      }
+      
       const adminUser = await db.user.findFirst({
         where: { 
           OR: [

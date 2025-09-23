@@ -25,6 +25,11 @@ function TokensContent() {
   const sessionId = searchParams?.get('session_id')
   
   useEffect(() => {
+    // Check if we're on the client side
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     // Check payment status if coming from checkout
     if (sessionId) {
       setPageState('success')
