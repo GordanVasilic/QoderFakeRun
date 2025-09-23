@@ -6,6 +6,7 @@ import type {
   ApiSuccess,
   ApiError 
 } from '@/lib/validations'
+import { useAuthStore } from '@/store/authStore'
 
 class ApiClient {
   private baseUrl: string
@@ -53,6 +54,14 @@ class ApiClient {
 
   // File generation API
   async generateFiles(request: FileGenerationRequest) {
+    // Get anonymousId from auth store if not provided in request
+    if (!request.anonymousId) {
+      const authState = useAuthStore.getState()
+      if (!authState.isAuthenticated && authState.anonymousId) {
+        request.anonymousId = authState.anonymousId
+      }
+    }
+
     return this.request<{
       files: Array<{
         name: string
