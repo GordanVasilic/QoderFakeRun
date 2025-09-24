@@ -180,8 +180,7 @@ export async function POST(request: NextRequest) {
           format,
           generatedAt: new Date().toISOString()
         }
-      },
-      message: `Successfully generated ${files.length} file${files.length > 1 ? 's' : ''}`
+      }
     })
 
   } catch (error) {
