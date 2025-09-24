@@ -81,9 +81,17 @@ export class TokenService {
   private baseUrl: string;
 
   private constructor() {
-    this.baseUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : 'http://localhost:3000';
+    if (typeof window !== 'undefined') {
+      // Client-side: use current origin
+      this.baseUrl = window.location.origin;
+    } else {
+      // Server-side: use environment variable or production URL
+      this.baseUrl = process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}`
+        : process.env.NODE_ENV === 'production'
+        ? 'https://www.fakemyride.com'
+        : 'http://localhost:3000';
+    }
   }
 
   public static getInstance(): TokenService {
