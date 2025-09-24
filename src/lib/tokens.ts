@@ -88,27 +88,56 @@ export const tokenService = {
   // Deduct tokens from a user account
   async deductTokensFromUser(userId: string, tokenCount = 1): Promise<boolean> {
     try {
+      console.log(`🔍 [deductTokensFromUser] Starting deduction for ${userId}, tokens: ${tokenCount}`);
+      
+      // First, check if the user exists and has enough tokens
       const user = await db.user.findUnique({
         where: { id: userId },
         select: { tokenBalance: true }
       });
       
-      if (!user || user.tokenBalance < tokenCount) {
+      console.log(`🔍 [deductTokensFromUser] Found user:`, user);
+      
+      if (!user) {
+        console.log(`❌ [deductTokensFromUser] No user found for userId: ${userId}`);
         return false;
       }
       
-      await db.user.update({
-        where: { id: userId },
-        data: {
-          tokenBalance: {
-            decrement: tokenCount
+      if (user.tokenBalance < tokenCount) {
+        console.log(`❌ [deductTokensFromUser] Insufficient balance. Required: ${tokenCount}, Available: ${user.tokenBalance}`);
+        return false;
+      }
+      
+      // Use a transaction to ensure atomicity and avoid prepared statement conflicts
+      const result = await db.$transaction(async (tx) => {
+        const updated = await tx.user.update({
+          where: { 
+            id: userId,
+            tokenBalance: {
+              gte: tokenCount // Ensure we still have enough tokens
+            }
+          },
+          data: {
+            tokenBalance: {
+              decrement: tokenCount
+            }
           }
-        }
+        });
+        
+        console.log(`✅ [deductTokensFromUser] Successfully deducted ${tokenCount} tokens. New balance: ${updated.tokenBalance}`);
+        return updated;
       });
       
       return true;
     } catch (error) {
-      console.error('Error deducting tokens from user:', error);
+      console.error('❌ [deductTokensFromUser] Error deducting tokens from user:', error);
+      
+      // Check if it's a record not found error (which means insufficient balance due to race condition)
+      if (error instanceof Error && error.message.includes('Record to update not found')) {
+        console.log(`❌ [deductTokensFromUser] Record not found during update - likely insufficient balance due to concurrent access`);
+        return false;
+      }
+      
       return false;
     }
   },
@@ -205,27 +234,61 @@ export const tokenService = {
   // Deduct tokens from anonymous user
   async deductTokensFromAnonymousUser(anonymousId: string, tokenCount = 1): Promise<boolean> {
     try {
+      console.log(`🔍 [deductTokensFromAnonymousUser] Starting deduction for ${anonymousId}, tokens: ${tokenCount}`);
+      
+      // First, check if the record exists and has enough tokens
       const record = await db.anonymousToken.findUnique({
         where: { anonymousId }
       });
       
-      if (!record || record.expiresAt <= new Date() || record.tokenBalance < tokenCount) {
+      console.log(`🔍 [deductTokensFromAnonymousUser] Found record:`, record);
+      
+      if (!record) {
+        console.log(`❌ [deductTokensFromAnonymousUser] No record found for anonymousId: ${anonymousId}`);
         return false;
       }
       
-      await db.anonymousToken.update({
-        where: { anonymousId },
-        data: {
-          tokenBalance: {
-            decrement: tokenCount
+      if (record.expiresAt <= new Date()) {
+        console.log(`❌ [deductTokensFromAnonymousUser] Record expired for anonymousId: ${anonymousId}`);
+        return false;
+      }
+      
+      if (record.tokenBalance < tokenCount) {
+        console.log(`❌ [deductTokensFromAnonymousUser] Insufficient balance. Required: ${tokenCount}, Available: ${record.tokenBalance}`);
+        return false;
+      }
+      
+      // Use a transaction to ensure atomicity and avoid prepared statement conflicts
+      const result = await db.$transaction(async (tx) => {
+        const updated = await tx.anonymousToken.update({
+          where: { 
+            anonymousId: anonymousId,
+            tokenBalance: {
+              gte: tokenCount // Ensure we still have enough tokens
+            }
           },
-          updatedAt: new Date()
-        }
+          data: {
+            tokenBalance: {
+              decrement: tokenCount
+            },
+            updatedAt: new Date()
+          }
+        });
+        
+        console.log(`✅ [deductTokensFromAnonymousUser] Successfully deducted ${tokenCount} tokens. New balance: ${updated.tokenBalance}`);
+        return updated;
       });
       
       return true;
     } catch (error) {
-      console.error('Error deducting tokens from anonymous user:', error);
+      console.error('❌ [deductTokensFromAnonymousUser] Error deducting tokens from anonymous user:', error);
+      
+      // Check if it's a record not found error (which means insufficient balance due to race condition)
+      if (error instanceof Error && error.message.includes('Record to update not found')) {
+        console.log(`❌ [deductTokensFromAnonymousUser] Record not found during update - likely insufficient balance due to concurrent access`);
+        return false;
+      }
+      
       return false;
     }
   },

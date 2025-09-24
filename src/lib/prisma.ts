@@ -3,7 +3,12 @@ import { PrismaClient } from '@prisma/client'
 // Force a new connection each time in development to avoid prepared statement conflicts
 function createPrismaClient() {
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error']
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error'],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    }
   })
 }
 
