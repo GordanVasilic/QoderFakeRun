@@ -719,43 +719,60 @@ export default function MapComponent({
     // Try to get user location first, then initialize map
     const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost'
     
-    if (navigator.geolocation && isSecureContext) {
-      console.log('🔍 Getting user location before map initialization...')
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords
-          console.log('✅ User location found, initializing map at:', latitude, longitude)
-          initializeMap([longitude, latitude])
-        },
-        (error) => {
-          console.warn('⚠️ Could not get user location:', error.message)
-          console.warn('📍 Error code:', error.code)
-          if (error.code === 1) {
-            console.warn('🔒 Location access denied by user')
-          } else if (error.code === 2) {
-            console.warn('📶 Location unavailable')
-          } else if (error.code === 3) {
-            console.warn('⏱️ Location request timed out')
+    const tryGeolocation = (attempt: number = 1) => {
+      if (navigator.geolocation && isSecureContext) {
+        console.log(`🔍 Getting user location (attempt ${attempt}/2)...`)
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords
+            console.log('✅ User location found, initializing map at:', latitude, longitude)
+            initializeMap([longitude, latitude])
+          },
+          (error) => {
+            console.warn('⚠️ Could not get user location:', error.message)
+            console.warn('📍 Error code:', error.code)
+            
+            let errorReason = ''
+            if (error.code === 1) {
+              errorReason = '🔒 Location access denied by user'
+              console.warn(errorReason)
+            } else if (error.code === 2) {
+              errorReason = '📶 Location unavailable'
+              console.warn(errorReason)
+            } else if (error.code === 3) {
+              errorReason = '⏱️ Location request timed out'
+              console.warn(errorReason)
+            }
+            
+            // Retry once with less accuracy if first attempt failed due to timeout or unavailable location
+            if (attempt === 1 && (error.code === 2 || error.code === 3)) {
+              console.log('🔄 Retrying with lower accuracy requirements...')
+              setTimeout(() => tryGeolocation(2), 1000)
+              return
+            }
+            
+            console.warn('🗼 Using fallback location (Paris, France)')
+            initializeMap([2.3522, 48.8566]) // Paris coordinates as fallback
+          },
+          {
+            enableHighAccuracy: attempt === 1, // Use high accuracy on first attempt, lower on retry
+            timeout: attempt === 1 ? 10000 : 15000, // Longer timeout, especially on retry
+            maximumAge: attempt === 1 ? 60000 : 300000 // Allow older location on retry
           }
-          console.warn('🗼 Using fallback location (Paris, France)')
-          initializeMap([2.3522, 48.8566]) // Paris coordinates as fallback
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000, // Shorter timeout for initial load
-          maximumAge: 60000
-        }
-      )
-    } else {
-      if (!navigator.geolocation) {
-        console.warn('⚠️ Geolocation not supported by this browser')
+        )
       } else {
-        console.warn('🔒 Geolocation requires HTTPS or localhost')
-        console.warn('💡 Tip: Access via https://localhost:3000 or deploy to HTTPS for location features')
+        if (!navigator.geolocation) {
+          console.warn('⚠️ Geolocation not supported by this browser')
+        } else {
+          console.warn('🔒 Geolocation requires HTTPS or localhost')
+          console.warn('💡 Tip: Access via https://localhost:3000 or deploy to HTTPS for location features')
+        }
+        console.warn('🗼 Using fallback location (Paris, France)')
+        initializeMap([2.3522, 48.8566]) // Paris coordinates as fallback
       }
-      console.warn('🗼 Using fallback location (Paris, France)')
-      initializeMap([2.3522, 48.8566]) // Paris coordinates as fallback
     }
+    
+    tryGeolocation()
     return () => {
       // Software rendering cleanup - much simpler than WebGL
       eventHandlersSetupRef.current = false // Reset event handlers flag

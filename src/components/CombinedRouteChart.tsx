@@ -207,93 +207,100 @@ export default function CombinedRouteChart({
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
       {/* Header with metrics toggles */}
       <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 border-b border-orange-200">
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-baseline gap-3">
             <h3 className="text-lg font-semibold text-gray-900">Route Performance</h3>
-            <div className="text-sm text-gray-600">
-              {((chartStats?.totalDistance || 0) * (unitSystem === 'imperial' ? 0.621371 : 1)).toFixed(2)} {unitSystem === 'imperial' ? 'mi' : 'km'} • {chartData.length} data points
-            </div>
           </div>
-          {/* Quick stats - inline on the right */}
-          {chartStats && (
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              {metricVisibility.elevation && (
-                <span>Max Elevation: <strong>{Math.round(chartStats.maxElevation)}m</strong></span>
-              )}
-              {metricVisibility.pace && (
-                <span>
-                  {activityType === 'bike' 
-                    ? (() => {
-                        const speed = paceToSpeed(chartStats.avgPace)
-                        const displaySpeed = unitSystem === 'imperial' ? speed * 0.621371 : speed
-                        const unit = unitSystem === 'imperial' ? 'mph' : 'km/h'
-                        return `Avg Speed: ${formatSpeed(displaySpeed)} ${unit}`
-                      })()
-                    : (() => {
-                        const displayPace = unitSystem === 'imperial' ? chartStats.avgPace * 1.609344 : chartStats.avgPace
-                        const unit = unitSystem === 'imperial' ? 'min/mi' : 'min/km'
-                        return `Avg Pace: ${formatPace(displayPace)} ${unit}`
-                      })()
-                  }
-                </span>
-              )}
-              {metricVisibility.heartRate && chartStats.avgHeartRate > 0 && (
-                <span>Avg HR: <strong>{Math.round(chartStats.avgHeartRate)} bpm</strong></span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Metric toggles */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => toggleMetric('elevation')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-              metricVisibility.elevation
-                ? 'bg-green-500 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <div className={`w-3 h-3 rounded ${metricVisibility.elevation ? 'bg-green-300' : 'bg-green-500'}`} />
-            Elevation
-          </button>
-
-          <button
-            onClick={() => toggleMetric('pace')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-              metricVisibility.pace
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <div className={`w-3 h-3 rounded ${metricVisibility.pace ? 'bg-blue-300' : 'bg-blue-500'}`} />
-            {activityType === 'bike' ? 'Speed' : 'Pace'}
-          </button>
-
-          {paceHeartRateSettings?.includeHeartRate && (
+          
+          {/* Improved toggle buttons with better visual design */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 mr-2">Show/Hide:</span>
+            
             <button
-              onClick={() => toggleMetric('heartRate')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                metricVisibility.heartRate
-                  ? 'bg-red-500 text-white shadow-sm'
-                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+              onClick={() => toggleMetric('elevation')}
+              className={`group flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                metricVisibility.elevation
+                  ? 'bg-green-500 text-white shadow-md hover:bg-green-600'
+                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-green-300'
               }`}
+              title={metricVisibility.elevation ? 'Hide elevation data' : 'Show elevation data'}
             >
-              <div className={`w-3 h-3 rounded ${metricVisibility.heartRate ? 'bg-red-300' : 'bg-red-500'}`} />
-              Heart Rate
+              <div className={`w-2 h-2 rounded transition-all ${
+                metricVisibility.elevation ? 'bg-green-300' : 'bg-green-500 group-hover:bg-green-400'
+              }`} />
+              <span>Elevation</span>
+              {metricVisibility.elevation ? (
+                <svg className="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3.707 14.707a1 1 0 01-1.414-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L10 10.414l-4.293 4.293z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3 ml-0.5 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              )}
             </button>
-          )}
+
+            <button
+              onClick={() => toggleMetric('pace')}
+              className={`group flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                metricVisibility.pace
+                  ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600'
+                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-blue-300'
+              }`}
+              title={metricVisibility.pace ? `Hide ${activityType === 'bike' ? 'speed' : 'pace'} data` : `Show ${activityType === 'bike' ? 'speed' : 'pace'} data`}
+            >
+              <div className={`w-2 h-2 rounded transition-all ${
+                metricVisibility.pace ? 'bg-blue-300' : 'bg-blue-500 group-hover:bg-blue-400'
+              }`} />
+              <span>{activityType === 'bike' ? 'Speed' : 'Pace'}</span>
+              {metricVisibility.pace ? (
+                <svg className="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3.707 14.707a1 1 0 01-1.414-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L10 10.414l-4.293 4.293z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3 ml-0.5 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              )}
+            </button>
+
+            {paceHeartRateSettings?.includeHeartRate && (
+              <button
+                onClick={() => toggleMetric('heartRate')}
+                className={`group flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                  metricVisibility.heartRate
+                    ? 'bg-red-500 text-white shadow-md hover:bg-red-600'
+                    : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-red-300'
+                }`}
+                title={metricVisibility.heartRate ? 'Hide heart rate data' : 'Show heart rate data'}
+              >
+                <div className={`w-2 h-2 rounded transition-all ${
+                  metricVisibility.heartRate ? 'bg-red-300' : 'bg-red-500 group-hover:bg-red-400'
+                }`} />
+                <span>Heart Rate</span>
+                {metricVisibility.heartRate ? (
+                  <svg className="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3.707 14.707a1 1 0 01-1.414-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L10 10.414l-4.293 4.293z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3 ml-0.5 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Combined Chart */}
-      <div className="p-6">
-        <div className="h-96">
+      <div className="p-2">
+        <div className="h-[500px]">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={transformedChartData}
               onMouseMove={handleChartMouseMove}
-              margin={{ top: 20, right: 80, bottom: 20, left: 20 }}
+              margin={{ top: 10, right: 20, bottom: 10, left: 10 }}
             >
               <defs>
                 <linearGradient id="elevationGradient" x1="0" y1="0" x2="0" y2="1">
