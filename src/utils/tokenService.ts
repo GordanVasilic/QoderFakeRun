@@ -85,10 +85,9 @@ export class TokenService {
       // Client-side: use current origin
       this.baseUrl = window.location.origin;
     } else {
-      // Server-side: use environment variable or production URL
-      this.baseUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NODE_ENV === 'production'
+      // Server-side: always use production URL in production environment
+      // Don't use VERCEL_URL as it points to preview deployments with auth protection
+      this.baseUrl = process.env.NODE_ENV === 'production'
         ? 'https://www.fakemyride.com'
         : 'http://localhost:3000';
     }
