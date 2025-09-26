@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Check, Star, ExternalLink, ArrowLeft, AlertCircle, X } from 'lucide-react';
 import { tokenService } from '@/lib/tokens';
 import type { TokenPackage } from '@/lib/tokens';
+import { detectUserCountry, getBestMatchingCountry } from '@/utils/geolocation';
 
 // Helper function to format price from cents to dollars
 const formatPrice = (priceInCents: number): string => {
@@ -149,6 +150,31 @@ const CompactPaymentForm: React.FC<{
   const [cardError, setCardError] = useState<string | null>(null);
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [declineErrorMessage, setDeclineErrorMessage] = useState('');
+  const [countryLoading, setCountryLoading] = useState(true);
+
+  // Auto-detect user's country on component mount
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        setCountryLoading(true);
+        const result = await detectUserCountry();
+        
+        if (result.success) {
+          const bestMatch = getBestMatchingCountry(result.countryCode, COUNTRIES);
+          setCountry(bestMatch);
+          console.log('Auto-detected country:', result.countryName, '(' + result.countryCode + ')');
+        } else {
+          console.warn('Country detection failed, using default (US):', result.error);
+        }
+      } catch (error) {
+        console.warn('Error detecting country:', error);
+      } finally {
+        setCountryLoading(false);
+      }
+    };
+
+    detectCountry();
+  }, []);
 
   // Default postal codes for countries that require them
   const getDefaultPostalCode = (countryCode: string): string => {
@@ -423,19 +449,24 @@ const CompactPaymentForm: React.FC<{
         {/* Country */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Country
+            Country {countryLoading && <span className="text-xs text-gray-500">(detecting...)</span>}
           </label>
           <select
             value={country}
             onChange={(e) => setCountry(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={countryLoading}
             required
           >
-            {COUNTRIES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.name}
-              </option>
-            ))}
+            {countryLoading ? (
+              <option value="">Detecting your location...</option>
+            ) : (
+              COUNTRIES.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))
+            )}
           </select>
         </div>
 

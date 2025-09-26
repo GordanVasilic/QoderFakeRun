@@ -57,8 +57,12 @@ export default function RunDetails({
   const [runName, setRunName] = useState(initialName || generateDefaultName())
   const [runDate, setRunDate] = useState(initialDate)
   const [startTime, setStartTime] = useState(initialStartTime)
-  const [description, setDescription] = useState(initialDescription)
   const [fileFormat, setFileFormat] = useState<'gpx' | 'tcx' | 'both'>('gpx')
+  const [showTokenRedemption, setShowTokenRedemption] = useState(false)
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [showFutureDateWarning, setShowFutureDateWarning] = useState(false)
+  const [description, setDescription] = useState(initialDescription)
   const [isGenerating, setIsGenerating] = useState(false)
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   
@@ -102,8 +106,17 @@ export default function RunDetails({
     onRunDetailsChange?.(runName, value, runDate, startTime)
   }
   
+  // Check if selected date is in the future
+  const isFutureDate = (dateString: string): boolean => {
+    const selectedDate = new Date(dateString)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Reset time to start of day for accurate comparison
+    return selectedDate > today
+  }
+
   const handleDateChange = (value: string) => {
     setRunDate(value)
+    setShowFutureDateWarning(isFutureDate(value))
     onRunDetailsChange?.(runName, description, value, startTime)
   }
   
@@ -239,6 +252,34 @@ export default function RunDetails({
             <div className="text-xs text-gray-500 mt-1">
               {formatDate(runDate)}
             </div>
+            
+            {/* Future Date Warning */}
+            {showFutureDateWarning && (
+              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800">
+                      Future Date Selected
+                    </h3>
+                    <div className="mt-1 text-sm text-amber-700">
+                      <p>
+                        You've selected a future date for this activity. Please note that some websites 
+                        (like Strava, Garmin Connect, and other fitness platforms) don't allow importing 
+                        GPX files with future activity dates.
+                      </p>
+                      <p className="mt-1 font-medium">
+                        You can continue with the export, but you may not be able to import the file into all tools.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
