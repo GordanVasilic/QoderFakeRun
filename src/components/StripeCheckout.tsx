@@ -48,28 +48,227 @@ const stripePromise = (() => {
   });
 })();
 
-// Countries list
+// Countries list - All countries worldwide
 const COUNTRIES = [
+  // North America
   { code: 'US', name: 'United States' },
   { code: 'CA', name: 'Canada' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'GT', name: 'Guatemala' },
+  { code: 'BZ', name: 'Belize' },
+  { code: 'SV', name: 'El Salvador' },
+  { code: 'HN', name: 'Honduras' },
+  { code: 'NI', name: 'Nicaragua' },
+  { code: 'CR', name: 'Costa Rica' },
+  { code: 'PA', name: 'Panama' },
+  
+  // Caribbean
+  { code: 'CU', name: 'Cuba' },
+  { code: 'JM', name: 'Jamaica' },
+  { code: 'HT', name: 'Haiti' },
+  { code: 'DO', name: 'Dominican Republic' },
+  { code: 'PR', name: 'Puerto Rico' },
+  { code: 'TT', name: 'Trinidad and Tobago' },
+  { code: 'BB', name: 'Barbados' },
+  { code: 'BS', name: 'Bahamas' },
+  
+  // South America
+  { code: 'BR', name: 'Brazil' },
+  { code: 'AR', name: 'Argentina' },
+  { code: 'CL', name: 'Chile' },
+  { code: 'PE', name: 'Peru' },
+  { code: 'CO', name: 'Colombia' },
+  { code: 'VE', name: 'Venezuela' },
+  { code: 'EC', name: 'Ecuador' },
+  { code: 'BO', name: 'Bolivia' },
+  { code: 'PY', name: 'Paraguay' },
+  { code: 'UY', name: 'Uruguay' },
+  { code: 'GY', name: 'Guyana' },
+  { code: 'SR', name: 'Suriname' },
+  
+  // Western Europe
   { code: 'GB', name: 'United Kingdom' },
-  { code: 'DE', name: 'Germany' },
+  { code: 'IE', name: 'Ireland' },
   { code: 'FR', name: 'France' },
+  { code: 'DE', name: 'Germany' },
   { code: 'IT', name: 'Italy' },
   { code: 'ES', name: 'Spain' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'JP', name: 'Japan' },
-  { code: 'BR', name: 'Brazil' },
-  { code: 'IN', name: 'India' },
-  { code: 'MX', name: 'Mexico' },
+  { code: 'PT', name: 'Portugal' },
   { code: 'NL', name: 'Netherlands' },
+  { code: 'BE', name: 'Belgium' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'CH', name: 'Switzerland' },
+  { code: 'AT', name: 'Austria' },
+  
+  // Nordic Countries
   { code: 'SE', name: 'Sweden' },
   { code: 'NO', name: 'Norway' },
   { code: 'DK', name: 'Denmark' },
   { code: 'FI', name: 'Finland' },
-  { code: 'CH', name: 'Switzerland' },
-  { code: 'AT', name: 'Austria' },
-  { code: 'BE', name: 'Belgium' },
+  { code: 'IS', name: 'Iceland' },
+  
+  // Eastern Europe
+  { code: 'PL', name: 'Poland' },
+  { code: 'CZ', name: 'Czech Republic' },
+  { code: 'SK', name: 'Slovakia' },
+  { code: 'HU', name: 'Hungary' },
+  { code: 'RO', name: 'Romania' },
+  { code: 'BG', name: 'Bulgaria' },
+  { code: 'HR', name: 'Croatia' },
+  { code: 'SI', name: 'Slovenia' },
+  { code: 'BA', name: 'Bosnia and Herzegovina' },
+  { code: 'RS', name: 'Serbia' },
+  { code: 'ME', name: 'Montenegro' },
+  { code: 'MK', name: 'North Macedonia' },
+  { code: 'AL', name: 'Albania' },
+  { code: 'XK', name: 'Kosovo' },
+  
+  // Baltic States
+  { code: 'EE', name: 'Estonia' },
+  { code: 'LV', name: 'Latvia' },
+  { code: 'LT', name: 'Lithuania' },
+  
+  // Eastern Europe (Former Soviet)
+  { code: 'RU', name: 'Russia' },
+  { code: 'UA', name: 'Ukraine' },
+  { code: 'BY', name: 'Belarus' },
+  { code: 'MD', name: 'Moldova' },
+  { code: 'GE', name: 'Georgia' },
+  { code: 'AM', name: 'Armenia' },
+  { code: 'AZ', name: 'Azerbaijan' },
+  { code: 'KZ', name: 'Kazakhstan' },
+  { code: 'UZ', name: 'Uzbekistan' },
+  { code: 'TM', name: 'Turkmenistan' },
+  { code: 'TJ', name: 'Tajikistan' },
+  { code: 'KG', name: 'Kyrgyzstan' },
+  
+  // Southern Europe
+  { code: 'GR', name: 'Greece' },
+  { code: 'CY', name: 'Cyprus' },
+  { code: 'MT', name: 'Malta' },
+  { code: 'TR', name: 'Turkey' },
+  
+  // Middle East
+  { code: 'IL', name: 'Israel' },
+  { code: 'PS', name: 'Palestine' },
+  { code: 'JO', name: 'Jordan' },
+  { code: 'LB', name: 'Lebanon' },
+  { code: 'SY', name: 'Syria' },
+  { code: 'IQ', name: 'Iraq' },
+  { code: 'IR', name: 'Iran' },
+  { code: 'SA', name: 'Saudi Arabia' },
+  { code: 'AE', name: 'United Arab Emirates' },
+  { code: 'QA', name: 'Qatar' },
+  { code: 'BH', name: 'Bahrain' },
+  { code: 'KW', name: 'Kuwait' },
+  { code: 'OM', name: 'Oman' },
+  { code: 'YE', name: 'Yemen' },
+  
+  // Africa - North
+  { code: 'EG', name: 'Egypt' },
+  { code: 'LY', name: 'Libya' },
+  { code: 'TN', name: 'Tunisia' },
+  { code: 'DZ', name: 'Algeria' },
+  { code: 'MA', name: 'Morocco' },
+  { code: 'SD', name: 'Sudan' },
+  
+  // Africa - West
+  { code: 'NG', name: 'Nigeria' },
+  { code: 'GH', name: 'Ghana' },
+  { code: 'CI', name: 'Ivory Coast' },
+  { code: 'SN', name: 'Senegal' },
+  { code: 'ML', name: 'Mali' },
+  { code: 'BF', name: 'Burkina Faso' },
+  { code: 'NE', name: 'Niger' },
+  { code: 'GN', name: 'Guinea' },
+  { code: 'SL', name: 'Sierra Leone' },
+  { code: 'LR', name: 'Liberia' },
+  { code: 'TG', name: 'Togo' },
+  { code: 'BJ', name: 'Benin' },
+  
+  // Africa - East
+  { code: 'ET', name: 'Ethiopia' },
+  { code: 'KE', name: 'Kenya' },
+  { code: 'UG', name: 'Uganda' },
+  { code: 'TZ', name: 'Tanzania' },
+  { code: 'RW', name: 'Rwanda' },
+  { code: 'BI', name: 'Burundi' },
+  { code: 'SO', name: 'Somalia' },
+  { code: 'DJ', name: 'Djibouti' },
+  { code: 'ER', name: 'Eritrea' },
+  
+  // Africa - Central
+  { code: 'CD', name: 'Democratic Republic of Congo' },
+  { code: 'CG', name: 'Republic of Congo' },
+  { code: 'CF', name: 'Central African Republic' },
+  { code: 'CM', name: 'Cameroon' },
+  { code: 'TD', name: 'Chad' },
+  { code: 'GA', name: 'Gabon' },
+  { code: 'GQ', name: 'Equatorial Guinea' },
+  
+  // Africa - Southern
+  { code: 'ZA', name: 'South Africa' },
+  { code: 'ZW', name: 'Zimbabwe' },
+  { code: 'ZM', name: 'Zambia' },
+  { code: 'MW', name: 'Malawi' },
+  { code: 'MZ', name: 'Mozambique' },
+  { code: 'BW', name: 'Botswana' },
+  { code: 'NA', name: 'Namibia' },
+  { code: 'SZ', name: 'Eswatini' },
+  { code: 'LS', name: 'Lesotho' },
+  { code: 'MG', name: 'Madagascar' },
+  { code: 'MU', name: 'Mauritius' },
+  
+  // Asia - East
+  { code: 'CN', name: 'China' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'KR', name: 'South Korea' },
+  { code: 'KP', name: 'North Korea' },
+  { code: 'MN', name: 'Mongolia' },
+  { code: 'TW', name: 'Taiwan' },
+  { code: 'HK', name: 'Hong Kong' },
+  { code: 'MO', name: 'Macau' },
+  
+  // Asia - Southeast
+  { code: 'TH', name: 'Thailand' },
+  { code: 'VN', name: 'Vietnam' },
+  { code: 'MY', name: 'Malaysia' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'ID', name: 'Indonesia' },
+  { code: 'PH', name: 'Philippines' },
+  { code: 'BN', name: 'Brunei' },
+  { code: 'KH', name: 'Cambodia' },
+  { code: 'LA', name: 'Laos' },
+  { code: 'MM', name: 'Myanmar' },
+  { code: 'TL', name: 'East Timor' },
+  
+  // Asia - South
+  { code: 'IN', name: 'India' },
+  { code: 'PK', name: 'Pakistan' },
+  { code: 'BD', name: 'Bangladesh' },
+  { code: 'LK', name: 'Sri Lanka' },
+  { code: 'NP', name: 'Nepal' },
+  { code: 'BT', name: 'Bhutan' },
+  { code: 'MV', name: 'Maldives' },
+  { code: 'AF', name: 'Afghanistan' },
+  
+  // Oceania
+  { code: 'AU', name: 'Australia' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'FJ', name: 'Fiji' },
+  { code: 'PG', name: 'Papua New Guinea' },
+  { code: 'SB', name: 'Solomon Islands' },
+  { code: 'VU', name: 'Vanuatu' },
+  { code: 'NC', name: 'New Caledonia' },
+  { code: 'PF', name: 'French Polynesia' },
+  { code: 'WS', name: 'Samoa' },
+  { code: 'TO', name: 'Tonga' },
+  { code: 'KI', name: 'Kiribati' },
+  { code: 'TV', name: 'Tuvalu' },
+  { code: 'NR', name: 'Nauru' },
+  { code: 'PW', name: 'Palau' },
+  { code: 'FM', name: 'Micronesia' },
+  { code: 'MH', name: 'Marshall Islands' },
 ];
 
 // Card Decline Modal Component
@@ -179,26 +378,225 @@ const CompactPaymentForm: React.FC<{
   // Default postal codes for countries that require them
   const getDefaultPostalCode = (countryCode: string): string => {
     const defaults: Record<string, string> = {
+      // North America
       'US': '10001', // New York
       'CA': 'K1A 0A6', // Ottawa
+      'MX': '01000', // Mexico City
+      'GT': '01001', // Guatemala City
+      'BZ': 'BZ', // Belize City
+      'SV': '1101', // San Salvador
+      'HN': '11101', // Tegucigalpa
+      'NI': '10000', // Managua
+      'CR': '10101', // San José
+      'PA': '0801', // Panama City
+      
+      // Caribbean
+      'CU': '10100', // Havana
+      'JM': 'Kingston 1', // Kingston
+      'HT': 'HT6110', // Port-au-Prince
+      'DO': '10101', // Santo Domingo
+      'PR': '00901', // San Juan
+      'TT': '100101', // Port of Spain
+      'BB': 'BB11000', // Bridgetown
+      'BS': 'Nassau', // Nassau
+      
+      // South America
+      'BR': '01310-100', // São Paulo
+      'AR': 'C1002', // Buenos Aires
+      'CL': '8320000', // Santiago
+      'PE': '15001', // Lima
+      'CO': '110111', // Bogotá
+      'VE': '1010', // Caracas
+      'EC': '170150', // Quito
+      'BO': '0001', // La Paz
+      'PY': '1536', // Asunción
+      'UY': '11000', // Montevideo
+      'GY': '592', // Georgetown
+      'SR': '0001', // Paramaribo
+      
+      // Western Europe
       'GB': 'SW1A 1AA', // London
-      'DE': '10115', // Berlin
+      'IE': 'D01', // Dublin
       'FR': '75001', // Paris
+      'DE': '10115', // Berlin
       'IT': '00118', // Rome
       'ES': '28001', // Madrid
-      'AU': '2000', // Sydney
-      'JP': '100-0001', // Tokyo
-      'BR': '01310-100', // São Paulo
-      'IN': '110001', // New Delhi
-      'MX': '06600', // Mexico City
+      'PT': '1000-001', // Lisbon
       'NL': '1012', // Amsterdam
+      'BE': '1000', // Brussels
+      'LU': '1009', // Luxembourg City
+      'CH': '3000', // Bern
+      'AT': '1010', // Vienna
+      
+      // Nordic Countries
       'SE': '111 29', // Stockholm
       'NO': '0150', // Oslo
       'DK': '1050', // Copenhagen
       'FI': '00100', // Helsinki
-      'CH': '3000', // Bern
-      'AT': '1010', // Vienna
-      'BE': '1000', // Brussels
+      'IS': '101', // Reykjavik
+      
+      // Eastern Europe
+      'PL': '00-001', // Warsaw
+      'CZ': '110 00', // Prague
+      'SK': '811 01', // Bratislava
+      'HU': '1011', // Budapest
+      'RO': '010011', // Bucharest
+      'BG': '1000', // Sofia
+      'HR': '10000', // Zagreb
+      'SI': '1000', // Ljubljana
+      'BA': '71000', // Sarajevo
+      'RS': '11000', // Belgrade
+      'ME': '81000', // Podgorica
+      'MK': '1000', // Skopje
+      'AL': '1001', // Tirana
+      'XK': '10000', // Pristina
+      
+      // Baltic States
+      'EE': '10111', // Tallinn
+      'LV': 'LV-1001', // Riga
+      'LT': '01001', // Vilnius
+      
+      // Eastern Europe (Former Soviet)
+      'RU': '101000', // Moscow
+      'UA': '01001', // Kyiv
+      'BY': '220030', // Minsk
+      'MD': 'MD-2001', // Chișinău
+      'GE': '0108', // Tbilisi
+      'AM': '0010', // Yerevan
+      'AZ': 'AZ1000', // Baku
+      'KZ': '010000', // Nur-Sultan
+      'UZ': '100000', // Tashkent
+      'TM': '744000', // Ashgabat
+      'TJ': '734001', // Dushanbe
+      'KG': '720001', // Bishkek
+      
+      // Southern Europe
+      'GR': '10431', // Athens
+      'CY': '1010', // Nicosia
+      'MT': 'VLT 1117', // Valletta
+      'TR': '06100', // Ankara
+      
+      // Middle East
+      'IL': '9100001', // Jerusalem
+      'PS': '00972', // Ramallah
+      'JO': '11118', // Amman
+      'LB': '1107 2020', // Beirut
+      'SY': '11311', // Damascus
+      'IQ': '10001', // Baghdad
+      'IR': '11155', // Tehran
+      'SA': '11564', // Riyadh
+      'AE': '00000', // Abu Dhabi
+      'QA': '00974', // Doha
+      'BH': '317', // Manama
+      'KW': '13001', // Kuwait City
+      'OM': '100', // Muscat
+      'YE': '00967', // Sana'a
+      
+      // Africa - North
+      'EG': '11511', // Cairo
+      'LY': '00218', // Tripoli
+      'TN': '1000', // Tunis
+      'DZ': '16000', // Algiers
+      'MA': '10000', // Rabat
+      'SD': '11111', // Khartoum
+      
+      // Africa - West
+      'NG': '100001', // Abuja
+      'GH': '00233', // Accra
+      'CI': '00225', // Yamoussoukro
+      'SN': '10000', // Dakar
+      'ML': '00223', // Bamako
+      'BF': '01', // Ouagadougou
+      'NE': '8001', // Niamey
+      'GN': '001', // Conakry
+      'SL': '00232', // Freetown
+      'LR': '1000', // Monrovia
+      'TG': '00228', // Lomé
+      'BJ': '00229', // Porto-Novo
+      
+      // Africa - East
+      'ET': '1000', // Addis Ababa
+      'KE': '00100', // Nairobi
+      'UG': '00256', // Kampala
+      'TZ': '11101', // Dodoma
+      'RW': '00250', // Kigali
+      'BI': '00257', // Gitega
+      'SO': '00252', // Mogadishu
+      'DJ': '00253', // Djibouti
+      'ER': '00291', // Asmara
+      
+      // Africa - Central
+      'CD': '00243', // Kinshasa
+      'CG': '00242', // Brazzaville
+      'CF': '00236', // Bangui
+      'CM': '00237', // Yaoundé
+      'TD': '00235', // N'Djamena
+      'GA': '00241', // Libreville
+      'GQ': '00240', // Malabo
+      
+      // Africa - Southern
+      'ZA': '0001', // Cape Town
+      'ZW': '00263', // Harare
+      'ZM': '10101', // Lusaka
+      'MW': '00265', // Lilongwe
+      'MZ': '1100', // Maputo
+      'BW': '00267', // Gaborone
+      'NA': '00264', // Windhoek
+      'SZ': '00268', // Mbabane
+      'LS': '00266', // Maseru
+      'MG': '101', // Antananarivo
+      'MU': '00230', // Port Louis
+      
+      // Asia - East
+      'CN': '100000', // Beijing
+      'JP': '100-0001', // Tokyo
+      'KR': '04524', // Seoul
+      'KP': '00850', // Pyongyang
+      'MN': '14200', // Ulaanbaatar
+      'TW': '100', // Taipei
+      'HK': '00852', // Hong Kong
+      'MO': '00853', // Macau
+      
+      // Asia - Southeast
+      'TH': '10100', // Bangkok
+      'VN': '100000', // Hanoi
+      'MY': '50000', // Kuala Lumpur
+      'SG': '018956', // Singapore
+      'ID': '10110', // Jakarta
+      'PH': '1000', // Manila
+      'BN': 'BS8811', // Bandar Seri Begawan
+      'KH': '12301', // Phnom Penh
+      'LA': '01000', // Vientiane
+      'MM': '11181', // Naypyidaw
+      'TL': '00670', // Dili
+      
+      // Asia - South
+      'IN': '110001', // New Delhi
+      'PK': '44000', // Islamabad
+      'BD': '1000', // Dhaka
+      'LK': '00100', // Colombo
+      'NP': '44600', // Kathmandu
+      'BT': '11001', // Thimphu
+      'MV': '20026', // Malé
+      'AF': '1001', // Kabul
+      
+      // Oceania
+      'AU': '2000', // Sydney
+      'NZ': '6011', // Wellington
+      'FJ': '00679', // Suva
+      'PG': '00675', // Port Moresby
+      'SB': '00677', // Honiara
+      'VU': '00678', // Port Vila
+      'NC': '98800', // Nouméa
+      'PF': '98714', // Papeete
+      'WS': '00685', // Apia
+      'TO': '00676', // Nuku'alofa
+      'KI': '00686', // Tarawa
+      'TV': '00688', // Funafuti
+      'NR': '00674', // Yaren
+      'PW': '00680', // Ngerulmud
+      'FM': '00691', // Palikir
+      'MH': '00692', // Majuro
     };
     return defaults[countryCode] || '00000';
   };
