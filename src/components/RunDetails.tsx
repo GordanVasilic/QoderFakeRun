@@ -57,7 +57,7 @@ export default function RunDetails({
   const [runName, setRunName] = useState(initialName || generateDefaultName())
   const [runDate, setRunDate] = useState(initialDate)
   const [startTime, setStartTime] = useState(initialStartTime)
-  const [fileFormat, setFileFormat] = useState<'gpx' | 'tcx' | 'both'>('gpx')
+  const [fileFormat] = useState<'gpx'>('gpx')
   const [showTokenRedemption, setShowTokenRedemption] = useState(false)
   const [showStripeCheckout, setShowStripeCheckout] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -146,7 +146,7 @@ export default function RunDetails({
           activityType
         },
         chartData,
-        format: fileFormat as 'gpx' | 'tcx' | 'both'
+        format: fileFormat as 'gpx'
       }
 
       // Debug logging for heart rate data
@@ -317,20 +317,8 @@ export default function RunDetails({
           <label htmlFor="fileFormat" className="block text-sm font-medium text-gray-700 mb-1">
             File Format
           </label>
-          <select
-            id="fileFormat"
-            value={fileFormat}
-            onChange={(e) => setFileFormat(e.target.value as 'gpx' | 'tcx' | 'both')}
-            className="input"
-          >
-            <option value="gpx">GPX only</option>
-            <option value="tcx">TCX only</option>
-            <option value="both">Both GPX & TCX</option>
-          </select>
-          <div className="text-xs text-gray-500 mt-1">
-            {fileFormat === 'gpx' && 'GPX: Compatible with most GPS devices and apps'}
-            {fileFormat === 'tcx' && 'TCX: Training Center XML with advanced data'}
-            {fileFormat === 'both' && 'Downloads both formats'}
+          <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border">
+            <strong>GPX Format:</strong> Compatible with most GPS devices and apps
           </div>
         </div>
 

@@ -78,7 +78,7 @@ export async function GET(
         includeHeartRate: route.chartData?.some((d: ChartDataPoint) => d.heartRate) || false,
         activityType: route.routeData.activityType || 'run'
       },
-      format: format as 'gpx' | 'tcx' | 'both'
+      format: format as 'gpx'
     }
 
     // Forward to the existing file generation endpoint

@@ -26,7 +26,7 @@ export default function SavedRouteCard({ route, viewMode, onLoad }: SavedRouteCa
   const { deleteRoute } = useSavedRoutesStore()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isDownloading, setIsDownloading] = useState<'gpx' | 'tcx' | null>(null)
+  const [isDownloading, setIsDownloading] = useState<'gpx' | null>(null)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -70,7 +70,7 @@ export default function SavedRouteCard({ route, viewMode, onLoad }: SavedRouteCa
     setShowDeleteConfirm(false)
   }
 
-  const handleDownload = async (format: 'gpx' | 'tcx') => {
+  const handleDownload = async (format: 'gpx') => {
     setIsDownloading(format)
     try {
       const response = await fetch(`/api/routes/${route.id}/download?format=${format}`)
@@ -316,16 +316,6 @@ export default function SavedRouteCard({ route, viewMode, onLoad }: SavedRouteCa
             onRedeem={() => handleDownload('gpx')}
             disabled={false}
             isProcessing={isDownloading === 'gpx'}
-            processingText="Downloading..."
-            className="px-3 py-2 text-gray-600 bg-gray-100 text-sm rounded-lg hover:bg-gray-200 transition-colors"
-          />
-          
-          <TokenRedemption
-            cost={1}
-            action="Download TCX"
-            onRedeem={() => handleDownload('tcx')}
-            disabled={false}
-            isProcessing={isDownloading === 'tcx'}
             processingText="Downloading..."
             className="px-3 py-2 text-gray-600 bg-gray-100 text-sm rounded-lg hover:bg-gray-200 transition-colors"
           />

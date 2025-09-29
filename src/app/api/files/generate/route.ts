@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fileLimiter, getClientIP } from '@/lib/rateLimit'
 import { FileGenerationSchema } from '@/lib/validations'
-import { generateGPX, generateTCX, generateRunSummary } from '@/utils/fileGeneration'
+import { generateGPX, generateRunSummary } from '@/utils/fileGeneration'
 import { tokenService } from '@/utils/tokenService'
 
 export async function POST(request: NextRequest) {
@@ -116,29 +116,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Generate files based on format - NO summary file
+    // Generate GPX file only
     const files: { name: string; content: string; mimeType: string }[] = []
     
     const timestamp = new Date().toISOString().split('T')[0]
     const safeFileName = (options.name || 'route').toLowerCase().replace(/[^a-z0-9]/g, '-')
 
-    if (format === 'gpx' || format === 'both') {
-      const gpxContent = generateGPX(routeData, options, chartData)
-      files.push({
-        name: `${safeFileName}-${timestamp}.gpx`,
-        content: gpxContent,
-        mimeType: 'application/gpx+xml'
-      })
-    }
-
-    if (format === 'tcx' || format === 'both') {
-      const tcxContent = generateTCX(routeData, options, chartData)
-      files.push({
-        name: `${safeFileName}-${timestamp}.tcx`,
-        content: tcxContent,
-        mimeType: 'application/vnd.garmin.tcx+xml'
-      })
-    }
+    const gpxContent = generateGPX(routeData, options, chartData)
+    files.push({
+      name: `${safeFileName}-${timestamp}.gpx`,
+      content: gpxContent,
+      mimeType: 'application/gpx+xml'
+    })
 
     // Redeem token for download (skip in development)
     if (!isDevelopment && anonymousId) {

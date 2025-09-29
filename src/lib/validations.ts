@@ -47,7 +47,7 @@ export const FileGenerationSchema = z.object({
     elevation: z.number().optional(),
     heartRate: z.number().min(50).max(250).optional(),
   })).optional(),
-  format: z.enum(['gpx', 'tcx', 'both']),
+  format: z.enum(['gpx']),
   anonymousId: z.string().optional(), // For anonymous user token validation
 })
 

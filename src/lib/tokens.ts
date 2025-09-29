@@ -298,7 +298,7 @@ export const tokenService = {
     routeId: string,
     userId?: string,
     anonymousId?: string,
-    format: 'GPX' | 'TCX' | 'KML' | 'JSON',
+    format: 'GPX',
     tokensUsed?: number,
     ipAddress?: string,
     userAgent?: string

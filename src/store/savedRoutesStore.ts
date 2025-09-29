@@ -79,7 +79,7 @@ export interface SavedRoutesState {
   saveRoute: (routeData: RouteData, chartData?: ChartDataPoint[], activityType?: 'run' | 'bike', name?: string, description?: string, date?: string, startTime?: string, paceHeartRateSettings?: PaceHeartRateSettings) => Promise<SavedRoute | null>
   loadRoute: (id: string) => Promise<SavedRoute | null>
   deleteRoute: (id: string) => Promise<boolean>
-  downloadRoute: (id: string, format: 'gpx' | 'tcx') => Promise<boolean>
+  downloadRoute: (id: string, format: 'gpx') => Promise<boolean>
   
   // UI Actions
   setViewMode: (mode: 'list' | 'grid') => void
