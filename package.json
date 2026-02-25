@@ -72,7 +72,7 @@
     "lucide-react": "^0.542.0",
     "mapbox-gl": "^3.14.0",
     "micro": "^10.0.1",
-    "next": "^15.5.0",
+    "next": "15.5.9",
     "next-rate-limit": "^0.0.3",
     "node-fetch": "^3.3.2",
     "pg": "^8.16.3",
